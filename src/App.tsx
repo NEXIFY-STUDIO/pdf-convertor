@@ -6,8 +6,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { 
-  ConversionMode, 
-  RenderScale, 
   AppSettings, 
   PdfDocumentInfo, 
   PageAsset, 
@@ -80,7 +78,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // State for export result
-  const [exportResult, setExportResult] = useState<ExportResult | null>(null);
+  const [, setExportResult] = useState<ExportResult | null>(null);
   
   // Ref for cancellation
   const cancelRef = useRef<boolean>(false);
@@ -404,7 +402,7 @@ const App: React.FC = () => {
           <div className="progress-section">
             <ProgressPanel
               progress={progress}
-              documentInfo={documentInfo}
+              documentInfo={documentInfo ?? undefined}
               onCancel={handleCancel}
               onExport={handleExport}
               onClear={handleClear}

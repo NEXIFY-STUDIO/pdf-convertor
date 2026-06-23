@@ -90,11 +90,13 @@ export function escapeJs(text: string): string {
 export function sanitizeClassName(text: string): string {
   if (text.length === 0) return 'unnamed';
   
-  return text
+  const sanitized = text
     .replace(/[^a-zA-Z0-9-_]/g, '-')
     .replace(/^-+|-+$/g, '')
     .replace(/-+/g, '-')
     .toLowerCase();
+    
+  return sanitized || 'unnamed';
 }
 
 /**
@@ -106,11 +108,13 @@ export function sanitizeId(text: string): string {
   if (text.length === 0) return 'unnamed';
   
   // CSS IDs cannot start with a number
-  const sanitized = text
+  let sanitized = text
     .replace(/[^a-zA-Z0-9-_]/g, '-')
     .replace(/^-+|-+$/g, '')
     .replace(/-+/g, '-')
     .toLowerCase();
+    
+  if (!sanitized) return 'unnamed';
   
   // Ensure it doesn't start with a number
   if (/^[0-9]/.test(sanitized)) {

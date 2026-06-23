@@ -49,18 +49,18 @@ beforeAll(() => {
       return null;
     }
     
-    toBlob(callback: (blob: Blob | null) => void, type?: string, quality?: number) {
-      callback(new Blob(['mock-image-data'], { type: type || 'image/png' }));
+    toBlob(callback: (blob: Blob | null) => void, _type?: string, _quality?: number) {
+      callback(new Blob(['mock-image-data'], { type: _type || 'image/png' }));
     }
     
-    toDataURL(type?: string, quality?: number): string {
+    toDataURL(_type?: string, _quality?: number): string {
       return 'data:image/png;base64,mock-data-url';
     }
   } as any;
   
   // Mock Blob
   global.Blob = class Blob {
-    constructor(parts: BlobPart[], options?: BlobPropertyBag) {
+    constructor(_parts: BlobPart[], _options?: BlobPropertyBag) {
       // Mock implementation
     }
     
@@ -69,7 +69,7 @@ beforeAll(() => {
   
   // Mock File
   global.File = class File extends Blob {
-    constructor(bits: BlobPart[], name: string, options?: FilePropertyBag) {
+    constructor(bits: BlobPart[], _name: string, _options?: FilePropertyBag) {
       super(bits);
       // Mock implementation
     }
@@ -86,7 +86,7 @@ beforeAll(() => {
   
   // Mock IntersectionObserver
   global.IntersectionObserver = class IntersectionObserver {
-    constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+    constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {
       // Mock implementation
     }
     

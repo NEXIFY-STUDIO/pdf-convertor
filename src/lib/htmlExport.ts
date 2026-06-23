@@ -10,13 +10,12 @@ import { saveAs } from 'file-saver';
 import { 
   ConversionMode, 
   RenderScale, 
-  AppSettings, 
   PageAsset, 
   ExportResult,
   Metadata,
   PdfDocumentInfo,
 } from '../types';
-import { escapeHtml, escapeHtmlAttribute, sanitizeClassName, sanitizeId } from './escapeHtml';
+import { escapeHtml, escapeHtmlAttribute } from './escapeHtml';
 import { formatFileSize } from './fileSize';
 
 /**
@@ -119,7 +118,7 @@ function generateHtml(
   const pagesHtml = generatePagesHtml(pageAssets, config);
   
   // Generate metadata for HTML head
-  const metaTags = generateMetaTags(title, documentInfo, config);
+  const metaTags = generateMetaTags(title, documentInfo);
   
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -176,10 +175,6 @@ function generateHtml(
  * @returns The CSS content as a string
  */
 function generateCss(pageAssets: PageAsset[], config: HtmlExportConfig): string {
-  // Find the maximum page width for responsive scaling
-  const maxWidth = Math.max(...pageAssets.map(asset => asset.width));
-  const maxHeight = Math.max(...pageAssets.map(asset => asset.height));
-  
   // Calculate aspect ratios for each page
   const pageStyles = pageAssets.map(asset => {
     const aspectRatio = asset.width / asset.height;
@@ -381,7 +376,7 @@ function generatePagesHtml(pageAssets: PageAsset[], config: HtmlExportConfig): s
       `;
     } else {
       // Structured mode: semantic-ish HTML
-      return generateStructuredPageHtml(asset, pageNumberStr);
+      return generateStructuredPageHtml(asset);
     }
   }).join('\n');
 }
@@ -392,7 +387,7 @@ function generatePagesHtml(pageAssets: PageAsset[], config: HtmlExportConfig): s
  * @param pageNumberStr - The page number as a string
  * @returns HTML string for the structured page
  */
-function generateStructuredPageHtml(asset: PageAsset, pageNumberStr: string): string {
+function generateStructuredPageHtml(asset: PageAsset): string {
   const textContent = asset.textContent || '';
   
   // For structured mode, we create a more semantic structure
@@ -423,8 +418,7 @@ function generateStructuredPageHtml(asset: PageAsset, pageNumberStr: string): st
  */
 function generateMetaTags(
   title: string,
-  documentInfo: PdfDocumentInfo,
-  config: HtmlExportConfig
+  documentInfo: PdfDocumentInfo
 ): string {
   const description = escapeHtmlAttribute(
     `HTML export of ${documentInfo.fileName} - ${documentInfo.numPages} pages`
@@ -516,12 +510,6 @@ export function revokePageAssetUrls(pageAssets: PageAsset[]): void {
 export function cleanupExportResources(pageAssets: PageAsset[]): void {
   // Revoke all object URLs
   revokePageAssetUrls(pageAssets);
-  
-  // Clear image blobs if possible
-  for (const asset of pageAssets) {
-    // Note: We can't really clear blobs, but we can set them to null
-    // The garbage collector will handle the rest
-  }
 }
 
 export default {

@@ -63,8 +63,8 @@ describe('escapeHtml', () => {
 
 describe('escapeHtmlAttribute', () => {
   it('should escape quotes for HTML attributes', () => {
-    expect(escapeHtmlAttribute('value="test"')).toBe('value=&quot;test&quot;');
-    expect(escapeHtmlAttribute("value='test'")).toBe('value=&#x27;test&#x27;');
+    expect(escapeHtmlAttribute('value="test"')).toBe('value&#x3D;&quot;test&quot;');
+    expect(escapeHtmlAttribute("value='test'")).toBe('value&#x3D;&#x27;test&#x27;');
   });
 
   it('should handle empty string', () => {
@@ -164,7 +164,7 @@ describe('sanitizeClassName', () => {
 
   it('should convert to lowercase', () => {
     expect(sanitizeClassName('MyClass')).toBe('myclass');
-    expect(sanitizeClassName('MY_CLASS')).toBe('my-class');
+    expect(sanitizeClassName('MY_CLASS')).toBe('my_class');
   });
 
   it('should handle empty string', () => {

@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import { isPdfFile, isPdfMimeType, formatFileSize } from '../lib/fileSize';
+import { isPdfFile, isPdfMimeType } from '../lib/fileSize';
 import { validatePdfFile } from '../lib/pdfWorker';
 
 interface UploadZoneProps {

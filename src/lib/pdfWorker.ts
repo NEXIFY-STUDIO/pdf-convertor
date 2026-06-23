@@ -10,12 +10,13 @@ import {
   GlobalWorkerOptions, 
   version as pdfjsVersion,
   PDFDocumentProxy,
-  PDFDocumentInfo,
 } from 'pdfjs-dist';
 
+// @ts-ignore - Vite specific import for worker URL
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
 // Set the worker path - using the bundled worker from pdfjs-dist
-// The worker will be loaded from the CDN or bundled depending on the build
-const CDN_WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+const CDN_WORKER_URL = pdfWorkerUrl;
 
 /**
  * PDF.js worker configuration
@@ -65,7 +66,9 @@ export function initializePdfWorker(config?: Partial<PdfWorkerConfig>): void {
   GlobalWorkerOptions.workerSrc = currentConfig.workerUrl;
   
   // Set max canvas pixels to prevent memory issues
-  GlobalWorkerOptions.maxCanvasPixels = currentConfig.maxCanvasPixels;
+  if ('maxCanvasPixels' in GlobalWorkerOptions) {
+    (GlobalWorkerOptions as any).maxCanvasPixels = currentConfig.maxCanvasPixels;
+  }
 
   isWorkerInitialized = true;
   
@@ -219,7 +222,7 @@ export async function validatePdfFile(file: File): Promise<boolean> {
  * @param pdfDocument - The PDF document proxy
  * @returns Promise that resolves to the document metadata
  */
-export async function getPdfMetadata(pdfDocument: PDFDocumentProxy): Promise<PDFDocumentInfo> {
+export async function getPdfMetadata(pdfDocument: PDFDocumentProxy): Promise<any> {
   try {
     return await pdfDocument.getMetadata();
   } catch (error) {
@@ -254,7 +257,9 @@ export function resetPdfWorker(): void {
   
   // Reset global worker options
   GlobalWorkerOptions.workerSrc = '';
-  GlobalWorkerOptions.maxCanvasPixels = 16777216;
+  if ('maxCanvasPixels' in GlobalWorkerOptions) {
+    (GlobalWorkerOptions as any).maxCanvasPixels = 16777216;
+  }
   
   console.log('PDF.js worker reset');
 }

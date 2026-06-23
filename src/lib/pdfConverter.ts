@@ -9,11 +9,16 @@ import {
   PDFDocumentProxy, 
   PDFPageProxy, 
   PageViewport,
-  PDFDocumentInfo,
-  renderTextLayer,
-  TextItem as PdfjsTextItem,
-  TextContent as PdfjsTextContent,
 } from 'pdfjs-dist';
+
+interface TextItemLike {
+  str?: string;
+  transform?: number[];
+  width?: number;
+  height?: number;
+  dir?: string;
+  fontName?: string;
+}
 import { 
   ConversionMode, 
   RenderScale, 
@@ -116,7 +121,6 @@ export async function convertPdfDocument(
       
       // Clean up the page to free memory
       page.cleanup();
-      page.destroy();
 
       // Report progress
       if (onProgress) {
@@ -234,7 +238,7 @@ async function extractPageText(page: PDFPageProxy): Promise<string> {
     const textContent = await page.getTextContent();
     
     // Extract and concatenate all text items
-    const textItems = textContent.items as PdfjsTextItem[];
+    const textItems = textContent.items as TextItemLike[];
     const textParts: string[] = [];
     
     for (const item of textItems) {
@@ -264,7 +268,7 @@ async function extractPageText(page: PDFPageProxy): Promise<string> {
  */
 export async function extractStructuredText(
   page: PDFPageProxy
-): Promise<PdfjsTextContent> {
+): Promise<any> {
   try {
     return await page.getTextContent();
   } catch (error) {
@@ -299,7 +303,6 @@ export async function getPdfPageInfo(
 
     // Clean up
     page.cleanup();
-    page.destroy();
   }
 
   return pageInfos;

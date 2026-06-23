@@ -54,23 +54,42 @@ export function parseFileSize(sizeString: string): number {
   
   if (trimmed === '0' || trimmed === '0 B') return 0;
   
-  const match = trimmed.match(/^([\d.]+)\s*([A-Z]*)B?$/);
+  const match = trimmed.match(/^([A-Z\d.]+)\s*([A-Z]*)$/);
   
   if (!match) {
     throw new Error(`Invalid file size format: ${sizeString}`);
   }
   
-  const value = parseFloat(match[1]);
-  const unit = match[2] as SizeUnit;
+  let valueStr = match[1];
+  let unitRaw = match[2];
+
+  if (unitRaw === '') {
+     const splitMatch = valueStr.match(/^([\d.]+)([A-Z]+)$/);
+     if (splitMatch) {
+         valueStr = splitMatch[1];
+         unitRaw = splitMatch[2];
+     } else if (/^[A-Z]+$/.test(valueStr)) {
+         throw new Error(`Invalid file size format: ${sizeString}`);
+     }
+  }
+  
+  const value = parseFloat(valueStr);
   
   if (isNaN(value)) {
     throw new Error(`Invalid number in file size: ${sizeString}`);
+  }
+
+  let unit = unitRaw;
+  if (unit === '') {
+    unit = 'B';
+  } else if (!unit.endsWith('B')) {
+    unit += 'B';
   }
   
   const unitIndex = SIZE_UNITS.findIndex(u => u === unit);
   
   if (unitIndex === -1) {
-    throw new Error(`Unknown size unit: ${unit}`);
+    throw new Error(`Unknown size unit: ${unitRaw}`);
   }
   
   return value * Math.pow(1024, unitIndex);

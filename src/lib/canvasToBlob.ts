@@ -171,9 +171,6 @@ export function resizeCanvas(
   height: number,
   clear: boolean = true
 ): void {
-  const oldWidth = canvas.width;
-  const oldHeight = canvas.height;
-  
   canvas.width = width;
   canvas.height = height;
   
