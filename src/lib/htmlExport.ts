@@ -181,14 +181,15 @@ function generateCss(pageAssets: PageAsset[], config: HtmlExportConfig): string 
     return `
       .page-${asset.pageNumber} {
         width: ${asset.width}px;
-        height: ${asset.height}px;
+        max-width: 100%;
+        height: auto;
         aspect-ratio: ${aspectRatio};
       }
       
       .page-${asset.pageNumber} img {
         width: 100%;
-        height: 100%;
-        object-fit: contain;
+        height: auto;
+        display: block;
       }
     `;
   }).join('\n');
@@ -265,23 +266,42 @@ html, body {
 .page img {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
 }
 
 /* Text layer for visual mode */
 ${config.includeTextLayer && config.mode === 'visual' ? `
-.text-layer {
+.text-layer-svg {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
+  z-index: 2;
+}
+
+.text-layer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+}
+
+.text-layer :is(span,br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  pointer-events: auto;
 }
 
 .text-layer-content {
@@ -360,13 +380,32 @@ function generatePagesHtml(pageAssets: PageAsset[], config: HtmlExportConfig): s
     
     if (config.mode === 'visual') {
       // Visual fidelity mode: image with optional text layer
-      const textLayerHtml = config.includeTextLayer && asset.textContent ? `
+      let textLayerHtml = '';
+      
+      if (config.includeTextLayer) {
+        if (asset.textLayerHtml) {
+          // Visual text layer using SVG foreignObject scaling for pixel-perfect positioning
+          textLayerHtml = `
+        <svg class="text-layer-svg" viewBox="0 0 ${asset.width} ${asset.height}">
+          <foreignObject x="0" y="0" width="${asset.width}" height="${asset.height}">
+            <div class="text-layer" style="width: ${asset.width}px; height: ${asset.height}px;">
+              ${asset.textLayerHtml}
+            </div>
+          </foreignObject>
+        </svg>
+          `;
+        } else if (asset.textContent) {
+          // Fallback text layer
+          const escapedContent = asset.textContent.split('\n').map(line => escapeHtml(line)).join('\n');
+          textLayerHtml = `
         <div class="text-layer">
           <div class="text-layer-content">
-            ${escapeHtml(asset.textContent)}
+            ${escapedContent}
           </div>
         </div>
-      ` : '';
+          `;
+        }
+      }
       
       return `
         <div class="page page-${asset.pageNumber}" id="page-${asset.pageNumber}">
@@ -390,8 +429,12 @@ function generatePagesHtml(pageAssets: PageAsset[], config: HtmlExportConfig): s
 function generateStructuredPageHtml(asset: PageAsset): string {
   const textContent = asset.textContent || '';
   
-  // For structured mode, we create a more semantic structure
-  // This is experimental and has lower visual fidelity
+  // Split by paragraph breaks and wrap in <p> tags
+  const paragraphs = textContent.split(/\n\n+/).map(para => {
+    const escapedPara = escapeHtml(para).replace(/\n/g, '<br>');
+    return `<p>${escapedPara}</p>`;
+  }).join('\n');
+  
   return `
     <article class="page page-${asset.pageNumber}" id="page-${asset.pageNumber}">
       <header class="page-header">
@@ -399,7 +442,7 @@ function generateStructuredPageHtml(asset: PageAsset): string {
       </header>
       <div class="page-content">
         <div class="page-text">
-          ${escapeHtml(textContent)}
+          ${paragraphs}
         </div>
       </div>
       <footer class="page-footer">

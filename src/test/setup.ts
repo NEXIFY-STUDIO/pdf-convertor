@@ -121,4 +121,20 @@ afterAll(() => {
   vi.restoreAllMocks();
 });
 
+vi.mock('pdfjs-dist', () => {
+  class MockTextLayer {
+    constructor() {}
+    render() {
+      return Promise.resolve();
+    }
+  }
+  return {
+    GlobalWorkerOptions: {
+      workerSrc: '',
+    },
+    version: '4.3.136',
+    TextLayer: MockTextLayer,
+  };
+});
+
 export {};

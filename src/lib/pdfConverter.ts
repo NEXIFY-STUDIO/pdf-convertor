@@ -9,6 +9,7 @@ import {
   PDFDocumentProxy, 
   PDFPageProxy, 
   PageViewport,
+  TextLayer,
 } from 'pdfjs-dist';
 
 interface TextItemLike {
@@ -29,7 +30,6 @@ import {
   ConversionProgress,
 } from '../types';
 import { canvasToBlob, clearCanvas, createCanvas } from './canvasToBlob';
-import { escapeHtml } from './escapeHtml';
 
 /**
  * PDF conversion configuration
@@ -205,9 +205,38 @@ async function convertPdfPage(
 
     // Extract text if needed
     let textContent: string | undefined;
+    let textLayerHtml: string | undefined;
     
     if (config.mode === 'structured' || config.includeTextLayer) {
       textContent = await extractPageText(page);
+      
+      if (config.mode === 'visual' && config.includeTextLayer && typeof document !== 'undefined') {
+        try {
+          const rawTextContent = await page.getTextContent();
+          const tempContainer = document.createElement('div');
+          tempContainer.className = 'text-layer';
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '-9999px';
+          tempContainer.style.top = '-9999px';
+          tempContainer.style.width = `${width}px`;
+          tempContainer.style.height = `${height}px`;
+          document.body.appendChild(tempContainer);
+          
+          const textLayer = new TextLayer({
+            textContentSource: rawTextContent,
+            container: tempContainer,
+            viewport: viewport,
+          });
+          
+          await textLayer.render();
+          textLayerHtml = tempContainer.innerHTML;
+          
+          // Clean up DOM
+          document.body.removeChild(tempContainer);
+        } catch (err) {
+          console.warn('Failed to render visual text layer:', err);
+        }
+      }
     }
 
     // Create page asset
@@ -216,6 +245,7 @@ async function convertPdfPage(
       imageBlob,
       imageUrl,
       textContent,
+      textLayerHtml,
       width,
       height,
     };
@@ -234,27 +264,55 @@ async function convertPdfPage(
  */
 async function extractPageText(page: PDFPageProxy): Promise<string> {
   try {
-    // Get text content
     const textContent = await page.getTextContent();
-    
-    // Extract and concatenate all text items
     const textItems = textContent.items as TextItemLike[];
-    const textParts: string[] = [];
-    
+    if (textItems.length === 0) return '';
+
+    let fullText = '';
+    let prevY: number | null = null;
+    let prevX: number | null = null;
+
     for (const item of textItems) {
-      if (item.str && item.str.trim()) {
-        // Escape each text part to prevent XSS
-        textParts.push(escapeHtml(item.str));
+      if (!item.str || !item.str.trim()) continue;
+
+      const str = item.str;
+      const transform = item.transform;
+      
+      if (transform && transform.length >= 6) {
+        const x = transform[4];
+        const y = transform[5];
+        const height = item.height || Math.abs(transform[3]) || 12;
+
+        if (prevY !== null) {
+          const yDiff = Math.abs(y - prevY);
+          
+          if (yDiff > height * 1.8) {
+            // Significant vertical gap -> paragraph break
+            fullText += '\n\n' + str;
+          } else if (yDiff > height * 0.8) {
+            // Normal line break
+            fullText += '\n' + str;
+          } else {
+            // Same line: determine if we need a space
+            if (prevX !== null && x > prevX + 5) {
+              fullText += ' ' + str;
+            } else {
+              fullText += str;
+            }
+          }
+        } else {
+          fullText += str;
+        }
+
+        prevX = x + (item.width || 0);
+        prevY = y;
+      } else {
+        // Fallback if no transform is available
+        fullText += (fullText ? ' ' : '') + str;
       }
     }
-    
-    // Join with spaces and clean up
-    const fullText = textParts.join(' ');
-    
-    // Clean up multiple spaces and trim
-    return fullText
-      .replace(/\s+/g, ' ')
-      .trim();
+
+    return fullText.trim();
   } catch (error) {
     console.warn('Failed to extract text from page:', error);
     return '';
