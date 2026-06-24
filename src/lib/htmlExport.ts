@@ -159,6 +159,13 @@ function generateHtml(
       document.head.appendChild(style);
     }
     
+    // Helper to toggle text overlay visibility for debugging/accessibility
+    window.toggleTextOverlay = function(show) {
+      document.querySelectorAll('.text-layer :is(span, br)').forEach(el => {
+        el.style.color = show ? 'rgba(0,0,0,0.6)' : 'transparent';
+      });
+    };
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', setupPrintStyles);
   </script>
@@ -302,6 +309,16 @@ ${config.includeTextLayer && config.mode === 'visual' ? `
   cursor: text;
   transform-origin: 0% 0%;
   pointer-events: auto;
+}
+
+.text-layer ::selection {
+  background: rgba(255, 235, 59, 0.9);
+  color: #000;
+}
+
+.text-layer ::-moz-selection {
+  background: rgba(255, 235, 59, 0.9);
+  color: #000;
 }
 
 .text-layer-content {
