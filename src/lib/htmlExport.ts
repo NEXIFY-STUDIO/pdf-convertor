@@ -388,7 +388,7 @@ function generatePagesHtml(pageAssets: PageAsset[], config: HtmlExportConfig): s
           textLayerHtml = `
         <svg class="text-layer-svg" viewBox="0 0 ${asset.width} ${asset.height}">
           <foreignObject x="0" y="0" width="${asset.width}" height="${asset.height}">
-            <div class="text-layer" style="width: ${asset.width}px; height: ${asset.height}px;">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="text-layer" style="width: ${asset.width}px; height: ${asset.height}px;">
               ${asset.textLayerHtml}
             </div>
           </foreignObject>
