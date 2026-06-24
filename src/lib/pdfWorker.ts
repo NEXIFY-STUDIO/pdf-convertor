@@ -12,11 +12,17 @@ import {
   PDFDocumentProxy,
 } from 'pdfjs-dist';
 
-// @ts-ignore - Vite specific import for worker URL
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+// Use Vite's recommended way to resolve worker URL
+const workerUrl = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
-// Set the worker path - using the bundled worker from pdfjs-dist
-const CDN_WORKER_URL = pdfWorkerUrl;
+// Initialize worker immediately to prevent PDF.js from falling back to CDN
+GlobalWorkerOptions.workerSrc = workerUrl;
+
+// Set the worker path
+const CDN_WORKER_URL = workerUrl;
 
 /**
  * PDF.js worker configuration
@@ -63,7 +69,9 @@ export function initializePdfWorker(config?: Partial<PdfWorkerConfig>): void {
   };
 
   // Set global worker options
-  GlobalWorkerOptions.workerSrc = currentConfig.workerUrl;
+  if (currentConfig.workerUrl) {
+    GlobalWorkerOptions.workerSrc = currentConfig.workerUrl;
+  }
   
   // Set max canvas pixels to prevent memory issues
   if ('maxCanvasPixels' in GlobalWorkerOptions) {

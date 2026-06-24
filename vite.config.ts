@@ -37,19 +37,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cdnjs\.delivr\.net\/npm\/pdfjs-dist@.*/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'pdfjs-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-            },
-          },
-        ],
       },
     }),
   ],
