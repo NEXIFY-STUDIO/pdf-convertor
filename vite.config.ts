@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -10,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg', 'pwa-512x512-maskable.svg'],
       manifest: {
-        name: 'PDF HTML Forge',
-        short_name: 'PDF Forge',
-        description: 'Convert PDF files into visually accurate offline HTML exports',
+        name: 'Blueprint Flow Editor',
+        short_name: 'Blueprint PDF',
+        description: 'Offline-first PDF financial statement editor',
         theme_color: '#1a1a2e',
         background_color: '#16213e',
         display: 'standalone',
