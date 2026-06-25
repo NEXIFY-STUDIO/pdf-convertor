@@ -14,6 +14,8 @@ beforeAll(() => {
   global.URL.revokeObjectURL = vi.fn();
   
   // Mock fetch for PDF.js
+  const originalFetch = global.fetch;
+  (global as any).originalFetch = originalFetch;
   global.fetch = vi.fn();
   
   // Mock canvas and context

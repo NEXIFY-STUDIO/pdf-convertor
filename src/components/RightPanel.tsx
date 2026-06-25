@@ -902,9 +902,10 @@ export default function RightPanel() {
               <button className="ft-mirror-close-btn" onClick={() => setEditingField(null)}>×</button>
             </div>
             <div className="ft-mirror-modal-body">
-              <label className="ft-label" style={{ marginBottom: '8px', display: 'block' }}>{editingField.label}</label>
+              <label htmlFor="generic-field-input" className="ft-label" style={{ marginBottom: '8px', display: 'block' }}>{editingField.label}</label>
               {editingField.key === 'bank_register_info' ? (
                 <textarea
+                  id="generic-field-input"
                   className="ft-input"
                   rows={4}
                   value={editingField.value}
@@ -913,6 +914,7 @@ export default function RightPanel() {
                 />
               ) : (
                 <input
+                  id="generic-field-input"
                   type="text"
                   className="ft-input"
                   value={editingField.value}
@@ -944,8 +946,9 @@ export default function RightPanel() {
             <div className="ft-mirror-modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Zaúčtované</label>
+                  <label htmlFor="tx-realiz" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Zaúčtované</label>
                   <input
+                    id="tx-realiz"
                     type="text"
                     className="ft-input"
                     value={txEditData.date_realiz}
@@ -954,8 +957,9 @@ export default function RightPanel() {
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Valuta</label>
+                  <label htmlFor="tx-valuta" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Valuta</label>
                   <input
+                    id="tx-valuta"
                     type="text"
                     className="ft-input"
                     value={txEditData.date_valuta}
@@ -966,8 +970,9 @@ export default function RightPanel() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Popis transakcie</label>
+                <label htmlFor="tx-popis" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Popis transakcie</label>
                 <textarea
+                  id="tx-popis"
                   className="ft-input"
                   rows={2}
                   value={txEditData.popis}
@@ -978,8 +983,9 @@ export default function RightPanel() {
 
               <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>VS</label>
+                  <label htmlFor="tx-vs" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>VS</label>
                   <input
+                    id="tx-vs"
                     type="text"
                     className="ft-input"
                     value={txEditData.vs || ''}
@@ -988,8 +994,9 @@ export default function RightPanel() {
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>KS</label>
+                  <label htmlFor="tx-ks" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>KS</label>
                   <input
+                    id="tx-ks"
                     type="text"
                     className="ft-input"
                     value={txEditData.ks || ''}
@@ -998,8 +1005,9 @@ export default function RightPanel() {
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>ŠS</label>
+                  <label htmlFor="tx-ss" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>ŠS</label>
                   <input
+                    id="tx-ss"
                     type="text"
                     className="ft-input"
                     value={txEditData.ss || ''}
@@ -1010,8 +1018,9 @@ export default function RightPanel() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Účet protistrany</label>
+                <label htmlFor="tx-account" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Účet protistrany</label>
                 <input
+                  id="tx-account"
                   type="text"
                   className="ft-input"
                   value={txEditData.account || ''}
@@ -1021,8 +1030,9 @@ export default function RightPanel() {
               </div>
 
               <div>
-                <label className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Suma</label>
+                <label htmlFor="tx-amount" className="ft-label" style={{ marginBottom: '4px', display: 'block' }}>Suma</label>
                 <input
+                  id="tx-amount"
                   type="number"
                   step="0.01"
                   className="ft-input"
