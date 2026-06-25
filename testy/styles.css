@@ -1,0 +1,138 @@
+/*
+ * PDF HTML Forge - Generated Styles
+ * Mode: structured
+ * Scale: 4x
+ * Generated: 2026-06-24T00:40:58.472Z
+ */
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Document container */
+.document-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Document header */
+.document-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.document-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.document-info {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Document content */
+.document-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+/* Page styles */
+.page {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
+  max-width: 100%;
+}
+
+.page img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Text layer for visual mode */
+
+
+/* Individual page styles */
+
+      .page-1 {
+        width: 1190px;
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 0.7066508313539193;
+      }
+      
+      .page-1 img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+    
+
+/* Document footer */
+.document-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #333;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .document-container {
+    padding: 1rem;
+  }
+  
+  .page {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .document-container {
+    padding: 0;
+    max-width: none;
+  }
+  
+  .document-header,
+  .document-footer {
+    display: none;
+  }
+  
+  .page {
+    box-shadow: none;
+    break-inside: avoid;
+    margin-bottom: 1cm;
+  }
+}

@@ -43,10 +43,10 @@ describe('Mistral API Live Integration Test', () => {
 
     // Quick connectivity check to see if network is available
     try {
-      await Promise.race([
-        fetch('https://api.mistral.ai'),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
-      ]);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      await fetch('https://api.mistral.ai', { signal: controller.signal });
+      clearTimeout(timeoutId);
     } catch (e) {
       console.warn('Could not connect to api.mistral.ai (network blocked/sandbox). Skipping live integration test.');
       return;

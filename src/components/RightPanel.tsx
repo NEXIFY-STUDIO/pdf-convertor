@@ -6,8 +6,8 @@ import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-
 Font.register({
   family: 'Roboto',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.ttf', fontWeight: 400 },
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4AMP6lQ.ttf', fontWeight: 700 }
+    { src: '/fonts/Roboto-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/Roboto-Bold.ttf', fontWeight: 700 }
   ]
 });
 
