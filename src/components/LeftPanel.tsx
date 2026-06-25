@@ -4,6 +4,7 @@ import Papa from 'papaparse';
 import { TransactionType } from '../schema/sourceOfTruth';
 import { pdf } from '@react-pdf/renderer';
 import { StatementDocument } from './RightPanel';
+import { parseStatementWithAI } from '../lib/mistralClient';
 
 async function downloadStatementPdf(sourceOfTruth: any): Promise<void> {
   const blob = await pdf(<StatementDocument sourceOfTruth={sourceOfTruth} />).toBlob();
@@ -15,15 +16,58 @@ async function downloadStatementPdf(sourceOfTruth: any): Promise<void> {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 export default function LeftPanel() {
-  const { sourceOfTruth, setBankData, setClientData, setStatementData, setOpeningBalance, setTransactions } = useAppStore();
+  const {  
+    sourceOfTruth,
+    setBankData, 
+    setClientData, 
+    setStatementData, 
+    setOpeningBalance, 
+    setTransactions,
+    mistralApiKey,
+    setMistralApiKey
+  } = useAppStore();
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+
+  // AI Import State
+  const [rawText, setRawText] = useState('');
+  const [aiModel, setAiModel] = useState('mistral-large-latest');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiSuccess, setAiSuccess] = useState(false);
+
+  const handleAiParse = async () => {
+    if (!rawText.trim()) return;
+    setAiLoading(true);
+    setAiError(null);
+    setAiSuccess(false);
+    try {
+      const result = await parseStatementWithAI(rawText, mistralApiKey, aiModel);
+      
+      if (result.bank) setBankData(result.bank);
+      if (result.client) setClientData(result.client);
+      if (result.statement) setStatementData(result.statement);
+      if (result.balances) {
+        setOpeningBalance(result.balances.opening_balance ?? 0);
+      }
+      if (Array.isArray(result.transactions)) {
+        setTransactions(mapJsonTransactions(result.transactions));
+      }
+      
+      setAiSuccess(true);
+      setRawText('');
+    } catch (err: any) {
+      console.error(err);
+      setAiError(err.message || 'Chyba pri analýze výpisu.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     setPdfLoading(true);
@@ -118,6 +162,75 @@ const mapJsonTransactions = (rows: any[]): TransactionType[] => {
 
   return (
     <aside className="ft-left">
+
+      {/* ── AI Import (Mistral) ── */}
+      <div className="ft-section-label">AI Import (Mistral)</div>
+      <div className="ft-card">
+        <div className="ft-card-title" style={{ marginBottom: '0.625rem' }}>Automatický import cez LLM</div>
+        
+        <div className="ft-field" style={{ marginBottom: '0.625rem' }}>
+          <label className="ft-label" htmlFor="mistral-key">Mistral API Kľúč</label>
+          <input
+            id="mistral-key"
+            className="ft-input"
+            type="password"
+            value={mistralApiKey}
+            onChange={(e) => setMistralApiKey(e.target.value)}
+            placeholder="Zadajte API kľúč..."
+            style={{ fontFamily: 'var(--font-mono)' }}
+          />
+        </div>
+
+        <div className="ft-field" style={{ marginBottom: '0.625rem' }}>
+          <label className="ft-label" htmlFor="mistral-raw-text">Surový text výpisu</label>
+          <textarea
+            id="mistral-raw-text"
+            className="ft-input"
+            rows={4}
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            placeholder="Sem skopírujte text z internet bankingu alebo PDF výpisu..."
+            style={{ resize: 'vertical', minHeight: '60px', fontFamily: 'var(--font-sans)' }}
+          />
+        </div>
+
+        <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
+          <div className="ft-field">
+            <label className="ft-label" htmlFor="mistral-model">Model</label>
+            <select
+              id="mistral-model"
+              className="ft-input"
+              value={aiModel}
+              onChange={(e) => setAiModel(e.target.value)}
+              style={{ padding: '0 0.5rem', height: '1.875rem' }}
+            >
+              <option value="mistral-large-latest">mistral-large-latest (Odporúčaný)</option>
+              <option value="open-mistral-nemo">open-mistral-nemo (Rýchly)</option>
+              <option value="mistral-small-latest">mistral-small-latest</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          className="ft-btn ft-btn-primary ft-btn-sm"
+          style={{ width: '100%', justifyContent: 'center', marginTop: '0.3125rem' }}
+          onClick={handleAiParse}
+          disabled={aiLoading || !rawText}
+        >
+          {aiLoading ? <><span className="ft-spinner" /> Spracovávam...</> : 'Analyzovať cez AI'}
+        </button>
+
+        {aiError && (
+          <div className="ft-error-msg" style={{ marginTop: '0.5rem', color: 'var(--color-error)' }}>
+            {aiError}
+          </div>
+        )}
+        {aiSuccess && (
+          <div style={{ marginTop: '0.5rem', color: 'var(--color-success)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+            ✓ Výpis bol úspešne naimportovaný!
+          </div>
+        )}
+      </div>
 
       {/* ── Bank Data ── */}
       <div className="ft-section-label">Banka</div>

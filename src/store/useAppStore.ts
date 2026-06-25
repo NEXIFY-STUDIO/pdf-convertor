@@ -3,6 +3,7 @@ import { SourceOfTruthType, TransactionType, ClientDataType, StatementDataType, 
 
 interface AppState {
   sourceOfTruth: SourceOfTruthType;
+  mistralApiKey: string;
   
   // Actions
   setBankData: (data: Partial<BankDataType>) => void;
@@ -13,6 +14,7 @@ interface AppState {
   setTransactions: (transactions: TransactionType[]) => void;
   addTransaction: (transaction: TransactionType) => void;
   recalculateBalances: () => void;
+  setMistralApiKey: (key: string) => void;
 }
 
 const initialSourceOfTruth: SourceOfTruthType = {
@@ -61,6 +63,9 @@ const initialSourceOfTruth: SourceOfTruthType = {
 
 export const useAppStore = create<AppState>((set, get) => ({
   sourceOfTruth: initialSourceOfTruth,
+  mistralApiKey: typeof window !== 'undefined' 
+    ? localStorage.getItem('mistral_api_key') || (import.meta.env.VITE_MISTRAL_API_KEY as string) || '' 
+    : '',
   
   setBankData: (data) => set((state) => ({
     sourceOfTruth: {
@@ -147,5 +152,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
       };
     });
+  },
+
+  setMistralApiKey: (key) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mistral_api_key', key);
+    }
+    set({ mistralApiKey: key });
   }
 }));

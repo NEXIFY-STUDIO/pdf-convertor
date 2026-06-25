@@ -5,6 +5,7 @@
  */
 
 import { beforeAll, afterAll, afterEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock global objects that are available in the browser
 beforeAll(() => {

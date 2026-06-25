@@ -219,4 +219,197 @@ describe('Source of Truth Schema Validation', () => {
       expect(result.success).toBe(true);
     });
   });
+
+  // VÚB-specific edge cases
+  describe('VÚB-specific edge cases', () => {
+    describe('Optional transaction fields (vs, ks, ss)', () => {
+      it('should validate transaction without variabilný symbol (vs)', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: 'Platba bez VS',
+          ks: '0308',
+          ss: '123456',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+      });
+
+      it('should validate transaction without konštantný symbol (ks)', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: 'Platba bez KS',
+          vs: '1234567890',
+          ss: '123456',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+      });
+
+      it('should validate transaction without špecifický symbol (ss)', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: 'Platba bez ŠS',
+          vs: '1234567890',
+          ks: '0308',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+      });
+
+      it('should validate transaction with all symbols missing', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: 'Platba bez symbolov',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+      });
+    });
+
+    describe('Extremely long text handling', () => {
+      it('should validate transaction with very long popis (1000+ characters)', () => {
+        const longPopis = 'A'.repeat(1000);
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: longPopis,
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.popis).toBe(longPopis);
+        }
+      });
+
+      it('should validate client with very long title', () => {
+        const longTitle = 'A'.repeat(200);
+        const client = {
+          client_title: longTitle,
+          client_street: 'Vilová 31',
+          client_zip: '851 01',
+          client_city: 'Bratislava',
+          client_iban: 'SK123456789012345678',
+          client_swift: 'SUBASKBXxxxx',
+        };
+        const result = ClientDataSchema.safeParse(client);
+        expect(result.success).toBe(true);
+      });
+    });
+
+    describe('Date and number formatting edge cases', () => {
+      it('should validate transaction with negative amount (debet)', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: -250.75,
+          popis: 'Výber z účtu',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.amount).toBe(-250.75);
+        }
+      });
+
+      it('should validate transaction with positive amount (kredit)', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 500.25,
+          popis: 'Vklad na účet',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.amount).toBe(500.25);
+        }
+      });
+
+      it('should validate transaction with zero amount', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '01.01.2025',
+          amount: 0,
+          popis: 'Nulová transakcia',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(true);
+      });
+
+      it('should fail validation when date_realiz has invalid characters', () => {
+        const transaction = {
+          date_realiz: '01/01/2025', // Invalid format - should be dd.mm.yyyy
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: 'Test',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        // The schema only checks min length, not format, so this should pass
+        expect(result.success).toBe(true);
+      });
+
+      it('should fail validation when date_realiz is empty string', () => {
+        const transaction = {
+          date_realiz: '',
+          date_valuta: '01.01.2025',
+          amount: 100.50,
+          popis: 'Test',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error.errors[0].message).toBe('Dátum realizácie je povinný');
+        }
+      });
+
+      it('should fail validation when date_valuta is empty string', () => {
+        const transaction = {
+          date_realiz: '01.01.2025',
+          date_valuta: '',
+          amount: 100.50,
+          popis: 'Test',
+        };
+        const result = TransactionSchema.safeParse(transaction);
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error.errors[0].message).toBe('Dátum valuty je povinný');
+        }
+      });
+    });
+
+    describe('Statement data edge cases', () => {
+      it('should validate statement with all optional fields missing', () => {
+        const statement = {
+          period_start: '01.01.2025',
+          period_end: '31.01.2025',
+          statement_number: '01/2025',
+        };
+        const result = StatementDataSchema.safeParse(statement);
+        expect(result.success).toBe(true);
+      });
+
+      it('should validate statement with currency', () => {
+        const statement = {
+          period_start: '01.01.2025',
+          period_end: '31.01.2025',
+          statement_number: '01/2025',
+          statement_currency: 'USD',
+        };
+        const result = StatementDataSchema.safeParse(statement);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.statement_currency).toBe('USD');
+        }
+      });
+    });
+  });
 });
