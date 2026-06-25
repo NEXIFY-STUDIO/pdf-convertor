@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -10,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg', 'pwa-512x512-maskable.svg'],
       manifest: {
-        name: 'PDF HTML Forge',
-        short_name: 'PDF Forge',
-        description: 'Convert PDF files into visually accurate offline HTML exports',
+        name: 'Blueprint Flow Editor',
+        short_name: 'Blueprint PDF',
+        description: 'Offline-first PDF financial statement editor',
         theme_color: '#1a1a2e',
         background_color: '#16213e',
         display: 'standalone',
@@ -37,19 +38,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cdnjs\.delivr\.net\/npm\/pdfjs-dist@.*/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'pdfjs-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-            },
-          },
-        ],
       },
     }),
   ],
@@ -61,6 +49,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
   test: {
     globals: true,

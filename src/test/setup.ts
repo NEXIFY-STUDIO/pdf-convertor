@@ -5,6 +5,7 @@
  */
 
 import { beforeAll, afterAll, afterEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock global objects that are available in the browser
 beforeAll(() => {
@@ -13,6 +14,8 @@ beforeAll(() => {
   global.URL.revokeObjectURL = vi.fn();
   
   // Mock fetch for PDF.js
+  const originalFetch = global.fetch;
+  (global as any).originalFetch = originalFetch;
   global.fetch = vi.fn();
   
   // Mock canvas and context
@@ -49,18 +52,18 @@ beforeAll(() => {
       return null;
     }
     
-    toBlob(callback: (blob: Blob | null) => void, type?: string, quality?: number) {
-      callback(new Blob(['mock-image-data'], { type: type || 'image/png' }));
+    toBlob(callback: (blob: Blob | null) => void, _type?: string, _quality?: number) {
+      callback(new Blob(['mock-image-data'], { type: _type || 'image/png' }));
     }
     
-    toDataURL(type?: string, quality?: number): string {
+    toDataURL(_type?: string, _quality?: number): string {
       return 'data:image/png;base64,mock-data-url';
     }
   } as any;
   
   // Mock Blob
   global.Blob = class Blob {
-    constructor(parts: BlobPart[], options?: BlobPropertyBag) {
+    constructor(_parts: BlobPart[], _options?: BlobPropertyBag) {
       // Mock implementation
     }
     
@@ -69,7 +72,7 @@ beforeAll(() => {
   
   // Mock File
   global.File = class File extends Blob {
-    constructor(bits: BlobPart[], name: string, options?: FilePropertyBag) {
+    constructor(bits: BlobPart[], _name: string, _options?: FilePropertyBag) {
       super(bits);
       // Mock implementation
     }
@@ -86,7 +89,7 @@ beforeAll(() => {
   
   // Mock IntersectionObserver
   global.IntersectionObserver = class IntersectionObserver {
-    constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+    constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {
       // Mock implementation
     }
     
@@ -119,6 +122,22 @@ afterEach(() => {
 // Clean up after all tests
 afterAll(() => {
   vi.restoreAllMocks();
+});
+
+vi.mock('pdfjs-dist', () => {
+  class MockTextLayer {
+    constructor() {}
+    render() {
+      return Promise.resolve();
+    }
+  }
+  return {
+    GlobalWorkerOptions: {
+      workerSrc: '',
+    },
+    version: '4.3.136',
+    TextLayer: MockTextLayer,
+  };
 });
 
 export {};

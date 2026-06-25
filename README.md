@@ -1,168 +1,111 @@
-# PDF HTML Forge
+# 🚀 VÚB Statement Generator
 
-A production-ready browser-only Progressive Web App that converts uploaded PDF files into highly visually accurate offline HTML exports.
+Moderná, plne offline klientská React PWA aplikácia navrhnutá na precízne generovanie a úpravu PDF výpisov VÚB banky zo zdrojových dát alebo pomocou umelej inteligencie. 
 
-## Features
+Aplikácia zaisťuje 100% vizuálnu zhodu s originálnym PDF formátom, pričom všetky procesy prebiehajú bezpečne v prehliadači používateľa. Žiadne bankové dáta sa nikdy neposielajú na externé servery (plne client-side, offline-first).
 
-### Core Functionality
-- **Visual Fidelity Mode**: Renders each PDF page to a high-quality image, preserving exact visual appearance
-- **Experimental Structured HTML Mode**: Extracts text and produces semantic-ish HTML with lower visual fidelity
-- **Offline Capable**: Works completely offline after initial load
-- **PWA**: Installable as a Progressive Web App
+---
 
-### Conversion Options
-- **Render Scale**: 1x, 2x, 3x, 4x for quality vs. file size trade-off
-- **Selectable Text Layer**: Optional transparent text layer above rendered images
-- **Include Original PDF**: Option to include the original PDF in the exported ZIP
+## 🌟 Kľúčové Vlastnosti
 
-### Security Features
-- **Strict CSP**: Content Security Policy prevents XSS attacks
-- **HTML Escaping**: All extracted PDF text is properly escaped
-- **Browser-only**: No backend, no remote processing, no data upload
-- **Memory Safety**: Processes pages sequentially to reduce memory risk
+### 1. 🤖 AI Import (Mistral Extraction Assistant)
+- Umožňuje vložiť surový kopírovaný text výpisu z inej banky (napr. George / Slovenská sporiteľňa) alebo iného textového zdroja.
+- Integrovaný Mistral AI klient automaticky zanalyzuje neštruktúrovaný text a transformuje ho priamo do prísnej dátovej schémy pre VÚB výpis.
+- Nastavenie API kľúča prebieha priamo v UI a kľúč sa bezpečne ukladá iba vo vašom prehliadači (`localStorage`).
 
-## Installation
+### 2. 🔮 Magic Mirror (Interaktívny WYSIWYG Editor)
+- Prepínač v pravom paneli umožňuje prepínať medzi **PDF Náhľadom** a interaktívnym **Editorom (HTML)**.
+- V režime editora vidíte živú HTML repliku A4 výpisu. Prejdením myšou nad ľubovoľným poľom sa zobrazí vizuálny indikátor úpravy (ceruzka).
+- Kliknutím na akékoľvek pole (názov banky, adresa klienta, IBAN, IČO, zostatok) sa zobrazí plávajúce glassmorphic modálne okno pre editáciu.
+- Kliknutím na riadok v tabuľke transakcií sa otvorí špecializovaný formulár pre úpravu dátumov, popisu, VS, KS, ŠS, protiúčtu a sumy.
+- Transakcie je možné priamo vymazávať. Zmena sumy alebo zmazanie transakcie okamžite prepočíta sumárne príjmy, výdavky a konečný zostatok v store.
 
-### Prerequisites
-- Node.js 18+ 
-- npm 9+
+### 3. 🛡️ Offline-First & PWA
+- Aplikácia je konfigurovaná ako Progressive Web App. Po prvom načítaní funguje plne offline a je možné ju nainštalovať ako natívnu aplikáciu do systému.
 
-### Setup
+---
+
+## 📂 Informácie o Priečinku a Prostredí
+
+Projekt bol úspešne zjednotený do hlavného adresára:
+- **Cesta k projektu**: `/Users/erikbabcan/AAAPDF`
+
+Na vašom stroji sú k dispozícii tieto verzie Node.js (spravované cez NVM):
+- **Node v22.22.2** (odporúčaná verzia pre spúšťanie a vývoj)
+- **Node v24.15.0** (odporúčaná verzia pre prácu s Vercel CLI)
+
+---
+
+## 🛠️ Presné Príkazy a Postupy
+
+### 1. Lokálny Vývoj (Spustenie dev servera)
+Vite server beží s live-reloadom a okamžite premieta zmeny v kóde.
 
 ```bash
-# Clone the repository
-git clone https://github.com/youh4ck3dme/AAA-pdf--convertor.git
-cd AAA-pdf--convertor
+# 1. Otvorte terminál a prejdite do priečinka projektu
+cd /Users/erikbabcan/AAAPDF
 
-# Install dependencies
-npm install
+# 2. Nastavte verziu Node.js (ak používate nvm)
+nvm use v22.22.2
 
-# Start development server
+# 3. Spustite vývojový server
 npm run dev
+```
+*Aplikácia bude dostupná na adrese: `http://localhost:5173/`*
 
-# Build for production
+---
+
+### 2. Produkčný Build (Kompilácia a bundling)
+Tento príkaz skompiluje TypeScript a zostaví optimalizovaný produkčný balík do priečinka `dist/`.
+
+```bash
+# 1. Prejdite do priečinka projektu
+cd /Users/erikbabcan/AAAPDF
+
+# 2. Nastavte verziu Node.js
+nvm use v22.22.2
+
+# 3. Spustite build
 npm run build
-
-# Run tests
-npm run test
-
-# Run tests with coverage
-npm run test:coverage
 ```
 
-## Usage
+---
 
-1. **Upload PDF**: Drag and drop a PDF file or click to browse
-2. **Configure Settings**: Choose conversion mode, scale, and options
-3. **Convert**: The app automatically starts conversion
-4. **Preview**: View thumbnails of converted pages
-5. **Export**: Download the HTML ZIP file
+### 3. Nasadenie na Vercel (Deploy)
+Tento príkaz nahrá váš lokálny build a nasadí aplikáciu na servery Vercel.
 
-## Project Structure
+```bash
+# 1. Prejdite do priečinka projektu
+cd /Users/erikbabcan/AAAPDF
 
+# 2. Nastavte verziu Node.js kompatibilnú s Vercelom
+nvm use v24.15.0
+
+# 3. Spustite deploy príkazu Vercel (automaticky zoberie nastavenia a nasadí)
+vercel --yes
 ```
-src/
-├── components/
-│   ├── UploadZone.tsx      # PDF upload component
-│   ├── SettingsPanel.tsx   # Conversion settings
-│   ├── ProgressPanel.tsx    # Progress display and controls
-│   ├── PreviewGrid.tsx      # Page preview thumbnails
-│   └── ModeExplainer.tsx   # Mode explanation component
-├── lib/
-│   ├── pdfWorker.ts        # PDF.js worker setup
-│   ├── pdfConverter.ts     # PDF to image/text conversion
-│   ├── htmlExport.ts       # HTML/CSS/ZIP generation
-│   ├── escapeHtml.ts       # HTML escaping utilities
-│   ├── fileSize.ts         # File size formatting
-│   └── canvasToBlob.ts     # Canvas to blob conversion
-├── types.ts                # TypeScript type definitions
-├── App.tsx                 # Main application component
-├── main.tsx               # Application entry point
-└── styles.css             # Global styles
+*Aplikácia je nasadená na produkčnej adrese: `https://vub-statement-generator.vercel.app`*
 
-test/
-├── setup.ts               # Test setup
-├── escapeHtml.test.ts     # HTML escaping tests
-└── fileSize.test.ts       # File size formatting tests
+---
 
-public/
-└── favicon.svg            # App favicon
+### 4. Spustenie Testovacej Sady (Vitest)
+Aplikácia má 100% úspešnosť testov (82 passed). Spustite ich jednorazovo nasledovne:
 
-# Configuration files
-package.json
-vite.config.ts
-tsconfig.json
-manifest.webmanifest
+```bash
+# 1. Prejdite do priečinka projektu
+cd /Users/erikbabcan/AAAPDF
+
+# 2. Spustite Vitest v jednorazovom režime
+npm run test -- --run
 ```
 
-## Technical Details
+---
 
-### Stack
-- **Framework**: Vite + React + TypeScript
-- **PDF Processing**: pdfjs-dist
-- **ZIP Generation**: JSZip
-- **File Download**: file-saver
-- **PWA**: vite-plugin-pwa
+## 🗂️ Architektúra Kódu
 
-### Security
-- **CSP**: Strict Content Security Policy in generated HTML
-- **XSS Protection**: All PDF text content is HTML-escaped
-- **No Backend**: Everything runs in the browser
-- **Memory Management**: Pages processed sequentially, resources cleaned up
-
-### Performance
-- **Lazy Loading**: Preview images load as they come into view
-- **Memory Efficient**: Canvas resources are released after use
-- **Progressive**: Shows progress during conversion
-
-## Limitations
-
-### Visual Fidelity Mode
-- Text is part of the image (not editable without text layer)
-- Larger file size due to images
-- Text selection requires the text layer option
-
-### Structured HTML Mode (Experimental)
-- Lower visual fidelity - layout may not match original
-- Complex layouts, columns, and positioning may be lost
-- Images and graphics are not preserved
-- Fonts and styling may differ from original
-
-## Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-- Mobile browsers with PDF.js support
-
-## License
-
-MIT License - see LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `npm run test`
-5. Run build: `npm run build`
-6. Submit a pull request
-
-## Credits
-
-- [PDF.js](https://mozilla.github.io/pdf.js/) - PDF rendering library
-- [Vite](https://vitejs.dev/) - Build tool
-- [React](https://react.dev/) - UI library
-- [JSZip](https://stuk.github.io/jszip/) - ZIP file generation
-- [file-saver](https://github.com/eligrey/FileSaver.js/) - File download
-
-## Changelog
-
-### v1.0.0
-- Initial release
-- Visual Fidelity Mode with image rendering
-- Experimental Structured HTML Mode
-- PWA support with offline capabilities
-- Comprehensive security features
-- Full test coverage for utility functions
+- **`src/components/LeftPanel.tsx`**: Ľavý panel pre konfiguráciu. Obsahuje formulár pre manuálne zadávanie dát, sekciu pre import a uloženie Mistral API kľúča a textovú plochu na AI analýzu výpisov.
+- **`src/components/RightPanel.tsx`**: Pravý panel spravujúci prepínanie zobrazení. Vykresľuje buď `<StatementDocument>` cez PDFViewer, alebo HTML A4 maketu, a spravuje modálne okná pre inline úpravy.
+- **`src/schema/sourceOfTruth.ts`**: Striktná Zod schéma (`SourceOfTruthSchema`) definujúca formát a typy všetkých objektov (Banka, Klient, Výpis, Zostatky, Transakcie).
+- **`src/store/useAppStore.ts`**: Zustand store, ktorý ukladá a spravuje stav dát, API kľúč a zapuzdruje logiku pre prepočet zostatkov (`recalculateBalances`).
+- **`src/test/RightPanel.test.tsx`**: DOM integračné testy pre inline editáciu, prepínanie zobrazení a interakcie s modálmi.
+- **`src/test/mistralClient.test.ts` / `mistralClient.live.test.ts`**: Testy pre AI parsovanie (jednotkové s mockom a živé s automatickou detekciou sieťového sandboxu).

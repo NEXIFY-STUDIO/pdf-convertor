@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="PDF HTML Forge - Convert PDF files into visually accurate offline HTML exports" />
     <meta name="theme-color" content="#1a1a2e" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>PDF HTML Forge</title>
     
@@ -18,8 +18,8 @@
     <link rel="icon" type="image/svg+xml" sizes="192x192" href="/pwa-192x192.svg" />
     <link rel="icon" type="image/svg+xml" sizes="512x512" href="/pwa-512x512.svg" />
     
-    <!-- CSP for development -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';" />
+    <!-- CSP for production and development -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://vercel.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://vercel.com https://vercel.live; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: data: https://fonts.gstatic.com https://api.mistral.ai https://vercel.live https://vercel.com; worker-src 'self' blob:; frame-src 'self' blob: https://vercel.live; object-src 'none';" />
   </head>
   <body>
     <div id="root"></div>
