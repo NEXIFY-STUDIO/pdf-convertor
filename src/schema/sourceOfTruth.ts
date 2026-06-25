@@ -41,6 +41,7 @@ export const StatementDataSchema = z.object({
 
 export const BankDataSchema = z.object({
   bank_logo_id: z.string().min(1, 'Bank logo ID je povinné'),
+  bank_logo_image: z.string().optional(),
   bank_register_info: z.string().min(1, 'Registračné info je povinné'),
   bank_outlet_id: z.string().min(1, 'Pobočka je povinná'),
   bank_outlet_address: z.string().min(1, 'Adresa pobočky je povinná'),
