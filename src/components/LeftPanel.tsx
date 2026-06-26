@@ -97,6 +97,7 @@ export default function LeftPanel() {
   const mapJsonTransactions = (rows: any[]): TransactionType[] => {
     return rows.map((row: any) => {
       const dateRealiz = row.transfer_confirmed_date || row.date_realiz || row.Date || row.date || '';
+      const dateBooking = row.date_booking || dateRealiz;
       const dateValuta = row.transfer_currency_date || row.date_valuta || row.Date || row.date || dateRealiz || '';
       
       let amt = 0;
@@ -116,10 +117,13 @@ export default function LeftPanel() {
       const vs = row.transfer_variable_symbol || row.vs || '';
       const ks = row.transfer_constant_symbol || row.ks || '';
       const ss = row.transfer_specific_symbol || row.ss || '';
-      const type = row.transfer_type || row.type || '';
+      
+      const isFee = row.is_fee === true || row.type === 'fee' || false;
+      const type = (row.type === 'fee' || isFee) ? 'fee' : (row.transfer_type || row.type || (amt >= 0 ? 'incoming' : 'outgoing')) as 'incoming' | 'outgoing' | 'fee';
 
       return {
         date_realiz: dateRealiz,
+        date_booking: dateBooking,
         date_valuta: dateValuta,
         amount: amt,
         popis,
@@ -127,7 +131,8 @@ export default function LeftPanel() {
         vs,
         ks,
         ss,
-        type
+        type,
+        is_fee: isFee
       };
     });
   };

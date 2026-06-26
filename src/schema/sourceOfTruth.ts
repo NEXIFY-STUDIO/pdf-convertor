@@ -3,14 +3,16 @@ import { z } from 'zod';
 export const TransactionSchema = z.object({
   id: z.string().optional(),
   date_realiz: z.string().min(1, 'Dátum realizácie je povinný'),
+  date_booking: z.string().optional(),
   date_valuta: z.string().min(1, 'Dátum valuty je povinný'),
   amount: z.number(),
   account: z.string().optional(),
   vs: z.string().optional(),
   ks: z.string().optional(),
   ss: z.string().optional(),
-  type: z.string().optional(),
+  type: z.enum(['incoming', 'outgoing', 'fee']).default('outgoing'),
   popis: z.string().optional(),
+  is_fee: z.boolean().default(false),
 });
 
 export const ClientDataSchema = z.object({
@@ -50,6 +52,7 @@ export const BalancesSchema = z.object({
   closing_balance: z.number(),
   total_credit: z.number(),
   total_debit: z.number(),
+  total_fees: z.number().default(0),
 });
 
 export const ExportSettingsSchema = z.object({

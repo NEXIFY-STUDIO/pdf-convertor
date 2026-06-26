@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { parseStatementWithAI } from '../lib/mistralClient';
+import { parseStatementWithAI, preprocessVUBText } from '../lib/mistralClient';
 
 describe('parseStatementWithAI', () => {
   beforeEach(() => {
@@ -94,5 +94,32 @@ describe('parseStatementWithAI', () => {
     await expect(
       parseStatementWithAI('statement text', 'mock-api-key')
     ).rejects.toThrow('Mistral API nevrátilo žiadny obsah.');
+  });
+});
+
+describe('preprocessVUBText', () => {
+  it('should strip system header lines matching VUB_AFP...', () => {
+    const raw = 'Some text\nVUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D\nOther text';
+    const processed = preprocessVUBText(raw);
+    expect(processed).toContain('Some text');
+    expect(processed).toContain('Other text');
+    expect(processed).not.toContain('VUB_AFP');
+  });
+
+  it('should merge lines ending with colons or slashes with the following line', () => {
+    const raw = 'Účel platby: /\nSP\nAnother line ending:\nwith value';
+    const processed = preprocessVUBText(raw);
+    expect(processed).toContain('Účel platby: / SP');
+    expect(processed).toContain('Another line ending: with value');
+  });
+
+  it('should extract the year from statement number header and append it to short dates', () => {
+    const raw = 'Por. číslo: 7/2022\n01/07 some txn\n04.07 other txn\n31.07.2022 existing date';
+    const processed = preprocessVUBText(raw);
+    expect(processed).toContain('01.07.2022 some txn');
+    expect(processed).toContain('04.07.2022 other txn');
+    // Ensure it doesn't duplicate the year if it was already present
+    expect(processed).toContain('31.07.2022 existing date');
+    expect(processed).not.toContain('.2022.2022');
   });
 });

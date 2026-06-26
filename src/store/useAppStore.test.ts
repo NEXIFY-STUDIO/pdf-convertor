@@ -32,6 +32,7 @@ describe('useAppStore', () => {
           closing_balance: 0,
           total_credit: 0,
           total_debit: 0,
+          total_fees: 0,
         },
         transactions: [],
         exportSettings: {
@@ -51,14 +52,18 @@ describe('useAppStore', () => {
       date_realiz: '01.01.2025',
       date_valuta: '01.01.2025',
       amount: 500, // Kredit
-      popis: 'Vklad'
+      popis: 'Vklad',
+      type: 'incoming',
+      is_fee: false,
     });
     
     store.addTransaction({
       date_realiz: '02.01.2025',
       date_valuta: '02.01.2025',
       amount: -200, // Debet
-      popis: 'Výber'
+      popis: 'Výber',
+      type: 'outgoing',
+      is_fee: false,
     });
 
     const updatedBalances = useAppStore.getState().sourceOfTruth.balances;
@@ -73,7 +78,7 @@ describe('useAppStore', () => {
     const store = useAppStore.getState();
     
     store.setTransactions([
-      { date_realiz: '01.01.2025', date_valuta: '01.01.2025', amount: 100, popis: 'Test' }
+      { date_realiz: '01.01.2025', date_valuta: '01.01.2025', amount: 100, popis: 'Test', type: 'incoming', is_fee: false }
     ]);
 
     expect(useAppStore.getState().sourceOfTruth.balances.closing_balance).toBe(100);
@@ -155,6 +160,7 @@ describe('useAppStore', () => {
           closing_balance: 0,
           total_credit: 0,
           total_debit: 0,
+          total_fees: 0,
         },
         transactions: [
           {
@@ -164,6 +170,8 @@ describe('useAppStore', () => {
             popis: 'Vklad',
             vs: '1234567890',
             ks: '0308',
+            type: 'incoming' as const,
+            is_fee: false,
           },
         ],
         exportSettings: {
@@ -255,7 +263,8 @@ describe('useAppStore', () => {
           ks: '0308',
           ss: '987654',
           account: 'SK987654321098765432',
-          type: 'incoming',
+          type: 'incoming' as const,
+          is_fee: false,
         },
         {
           date_realiz: '02.01.2025',
@@ -264,6 +273,8 @@ describe('useAppStore', () => {
           popis: 'Výber hotovosti',
           vs: '0987654321',
           ks: '0308',
+          type: 'outgoing' as const,
+          is_fee: false,
         },
       ];
 

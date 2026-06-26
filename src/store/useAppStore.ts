@@ -27,6 +27,7 @@ interface AppState {
   addTransaction: (transaction: TransactionType) => void;
   recalculateBalances: () => void;
   setMistralApiKey: (key: string) => void;
+  setSourceOfTruth: (data: SourceOfTruthType) => void;
   
   // Batch Actions
   setBatchMode: (mode: boolean) => void;
@@ -73,6 +74,7 @@ const initialSourceOfTruth: SourceOfTruthType = {
     closing_balance: 0,
     total_credit: 0,
     total_debit: 0,
+    total_fees: 0,
   },
   transactions: [],
   exportSettings: {
@@ -105,6 +107,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedBatchIndex: 0,
   batchStatements: [],
   batchSettings: initialBatchSettings,
+
+  setSourceOfTruth: (data) => set({ sourceOfTruth: data }),
 
   setBankData: (data) => set((state) => {
     const updatedBank = { ...state.sourceOfTruth.bank, ...data };
@@ -200,21 +204,25 @@ export const useAppStore = create<AppState>((set, get) => ({
       
       let total_credit = 0;
       let total_debit = 0;
+      let total_fees = 0;
 
       transactions.forEach(t => {
-        if (t.amount >= 0) {
+        if (t.is_fee) {
+          total_fees += Math.abs(t.amount);
+        } else if (t.amount >= 0) {
           total_credit += t.amount;
         } else {
           total_debit += Math.abs(t.amount);
         }
       });
 
-      const closing_balance = opening_balance + total_credit - total_debit;
+      const closing_balance = opening_balance + total_credit - total_debit - total_fees;
 
       const updatedBalances = {
         opening_balance,
         total_credit,
         total_debit,
+        total_fees,
         closing_balance,
       };
 
@@ -290,12 +298,14 @@ export const useAppStore = create<AppState>((set, get) => ({
         const period_start = `01.${monthStr}.${yearStr}`;
         const period_end = `${lastDayStr}.${monthStr}.${yearStr}`;
         
-        // Generate transactions for this month
         const monthTransactions: TransactionType[] = recurringTransactions.map(rec => {
           const day = Math.min(Math.max(1, parseInt(String(rec.day)) || 1), lastDay);
           const dayStr = String(day).padStart(2, '0');
           const dateStr = `${dayStr}.${monthStr}.${yearStr}`;
           
+          const is_fee = rec.description.toLowerCase().includes('poplatok') || rec.description.toLowerCase().includes('vedenie konta');
+          const type = is_fee ? 'fee' : (rec.amount >= 0 ? 'incoming' : 'outgoing');
+
           return {
             date_realiz: dateStr,
             date_valuta: dateStr,
@@ -305,7 +315,8 @@ export const useAppStore = create<AppState>((set, get) => ({
             vs: '',
             ks: '',
             ss: '',
-            type: rec.amount >= 0 ? 'incoming' : 'outgoing'
+            type,
+            is_fee
           };
         });
         
@@ -318,15 +329,18 @@ export const useAppStore = create<AppState>((set, get) => ({
         
         let total_credit = 0;
         let total_debit = 0;
+        let total_fees = 0;
         monthTransactions.forEach(t => {
-          if (t.amount >= 0) {
+          if (t.is_fee) {
+            total_fees += Math.abs(t.amount);
+          } else if (t.amount >= 0) {
             total_credit += t.amount;
           } else {
             total_debit += Math.abs(t.amount);
           }
         });
         
-        const closing_balance = currentOpening + total_credit - total_debit;
+        const closing_balance = currentOpening + total_credit - total_debit - total_fees;
         
         const statementData: StatementDataType = {
           ...state.sourceOfTruth.statement,
@@ -342,6 +356,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           opening_balance: currentOpening,
           total_credit,
           total_debit,
+          total_fees,
           closing_balance
         };
         
@@ -382,16 +397,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         
         let total_credit = 0;
         let total_debit = 0;
+        let total_fees = 0;
 
         current.transactions.forEach(t => {
-          if (t.amount >= 0) {
+          if (t.is_fee) {
+            total_fees += Math.abs(t.amount);
+          } else if (t.amount >= 0) {
             total_credit += t.amount;
           } else {
             total_debit += Math.abs(t.amount);
           }
         });
 
-        const newClosing = prevClosing + total_credit - total_debit;
+        const newClosing = prevClosing + total_credit - total_debit - total_fees;
 
         updatedBatch[i] = {
           ...current,
@@ -399,6 +417,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             opening_balance: prevClosing,
             total_credit,
             total_debit,
+            total_fees,
             closing_balance: newClosing
           }
         };

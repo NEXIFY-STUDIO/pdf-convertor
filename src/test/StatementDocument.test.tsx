@@ -4,50 +4,59 @@ import { StatementDocument } from '../components/RightPanel';
 import { SourceOfTruthType } from '../schema/sourceOfTruth';
 
 // Mock data for testing
-const createMockSourceOfTruth = (overrides: Partial<SourceOfTruthType> = {}): SourceOfTruthType => ({
-  bank: {
-    bank_logo_id: 'VÚB BANKA Intesa Sanpaolo Group',
-    bank_register_info: 'VÚB, a.s., Mlynské nivy 1, 829 90 Bratislava',
-    bank_outlet_id: '30017',
-    bank_outlet_address: 'KOMÁRNICKÁ 11, BRATISLAVA',
-    ...overrides.bank,
-  },
-  client: {
-    client_title: 'Test Company s.r.o.',
-    client_street: 'Hlavná 123',
-    client_zip: '811 01',
-    client_city: 'Bratislava',
-    client_iban: 'SK987654321098765432',
-    client_swift: 'SUBASKBX',
-    client_account: '2345678901',
-    client_id: '12345678',
-    client_limit: '5000,00',
-    ...overrides.client,
-  },
-  statement: {
-    period_start: '01.01.2025',
-    period_end: '31.01.2025',
-    statement_number: '01/2025',
-    statement_frequency: 'mesačne',
-    statement_title: 'VÝPIS Z ÚČTU',
-    statement_date: '31.01.2025',
-    statement_currency: 'EUR',
-    ...overrides.statement,
-  },
-  balances: {
-    opening_balance: 1000,
-    closing_balance: 1500,
-    total_credit: 1500,
-    total_debit: 1000,
-    ...overrides.balances,
-  },
-  transactions: overrides.transactions || [],
-  exportSettings: {
-    show_logo: true,
-    language: 'sk',
-    ...overrides.exportSettings,
-  },
-});
+const createMockSourceOfTruth = (overrides: any = {}): SourceOfTruthType => {
+  const transactions = (overrides.transactions || []).map((t: any) => ({
+    type: 'outgoing',
+    is_fee: false,
+    ...t
+  }));
+
+  return {
+    bank: {
+      bank_logo_id: 'VÚB BANKA Intesa Sanpaolo Group',
+      bank_register_info: 'VÚB, a.s., Mlynské nivy 1, 829 90 Bratislava',
+      bank_outlet_id: '30017',
+      bank_outlet_address: 'KOMÁRNICKÁ 11, BRATISLAVA',
+      ...overrides.bank,
+    },
+    client: {
+      client_title: 'Test Company s.r.o.',
+      client_street: 'Hlavná 123',
+      client_zip: '811 01',
+      client_city: 'Bratislava',
+      client_iban: 'SK987654321098765432',
+      client_swift: 'SUBASKBX',
+      client_account: '2345678901',
+      client_id: '12345678',
+      client_limit: '5000,00',
+      ...overrides.client,
+    },
+    statement: {
+      period_start: '01.01.2025',
+      period_end: '31.01.2025',
+      statement_number: '01/2025',
+      statement_frequency: 'mesačne',
+      statement_title: 'VÝPIS Z ÚČTU',
+      statement_date: '31.01.2025',
+      statement_currency: 'EUR',
+      ...overrides.statement,
+    },
+    balances: {
+      opening_balance: 1000,
+      closing_balance: 1500,
+      total_credit: 1500,
+      total_debit: 1000,
+      total_fees: 0,
+      ...overrides.balances,
+    },
+    transactions,
+    exportSettings: {
+      show_logo: true,
+      language: 'sk',
+      ...overrides.exportSettings,
+    },
+  };
+};
 
 // Helper to check component structure
 const checkComponentStructure = (element: React.ReactElement) => {

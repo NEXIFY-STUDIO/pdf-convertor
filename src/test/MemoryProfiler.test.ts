@@ -99,6 +99,8 @@ describe('useAppStore - cascadeBalances Memory and Performance Profiling', () =>
         amount: -10.0 - i,
         popis: `Benchmark transaction ${i}`,
         account: 'SK120000000000000000',
+        type: 'outgoing',
+        is_fee: false,
       });
       
       useAppStore.setState((state) => {

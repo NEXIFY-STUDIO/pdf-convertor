@@ -85,7 +85,7 @@ describe('VÚB Statement layout requirements & correctness', () => {
 
     // Verify side code
     const hasSideCode = pdfTextsContent.some(text => 
-      text.includes('KORPELE_XDA_20251128322528_120XP.DAT')
+      text.includes('VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml')
     );
     expect(hasSideCode).toBe(true);
   });

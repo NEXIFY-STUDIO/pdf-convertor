@@ -80,6 +80,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
         date_valuta: '01.01.2025',
         amount: 200,
         popis: 'Výplata',
+        type: 'incoming',
+        is_fee: false,
       }
     ]);
 
@@ -122,6 +124,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
         date_valuta: '01.01.2025',
         amount: -200,
         popis: 'Nákup potravín',
+        type: 'outgoing',
+        is_fee: false,
       }
     ]);
 

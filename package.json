@@ -8,6 +8,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "test:unit": "vitest run src/test/sourceOfTruth.test.ts src/test/mistralClient.test.ts",
+    "test:integration": "vitest run src/test/LeftPanel.integration.test.tsx src/test/RightPanel.test.tsx src/test/BatchGenerator.test.tsx src/test/VubLayout.test.tsx",
+    "test:stress": "vitest run src/test/MemoryProfiler.test.ts",
+    "test:security": "vitest run src/test/security.test.ts",
     "test:coverage": "vitest --coverage",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },

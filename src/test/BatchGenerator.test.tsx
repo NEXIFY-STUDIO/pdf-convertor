@@ -113,7 +113,8 @@ describe('Batch PDF Generator & Time-Machine Store Logic', () => {
       vs: '',
       ks: '',
       ss: '',
-      type: 'outgoing'
+      type: 'outgoing',
+      is_fee: false
     });
     
     // This will trigger recalculation and cascading
