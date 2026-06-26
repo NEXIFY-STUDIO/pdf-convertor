@@ -1,11 +1,15 @@
 export default function middleware(request) {
-  const authHeader = request.headers.get('x-tailscale-auth');
   const secret = process.env.TAILSCALE_SECRET;
 
   if (!secret) {
-    console.error('CRITICAL: TAILSCALE_SECRET is not set in environment variables!');
+    console.error('CRITICAL: TAILSCALE_SECRET is not set — blocking all traffic.');
+    return new Response(
+      JSON.stringify({ error: 'Service misconfigured.' }),
+      { status: 503, headers: { 'content-type': 'application/json' } }
+    );
   }
 
+  const authHeader = request.headers.get('x-tailscale-auth');
   if (authHeader !== secret) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized: Access restricted.' }),

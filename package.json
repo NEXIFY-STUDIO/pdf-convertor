@@ -22,7 +22,9 @@
     "test:production_sec": "vitest run tests/production/security.test.ts",
     "test:performance": "vitest run tests/production/performance.test.ts",
     "test:production": "npm run test:ai && npm run test:pdf && npm run test:visual && npm run test:data && npm run test:production_sec && npm run test:performance",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "tailscale:proxy": "node scripts/tailscale-vercel-proxy.mjs",
+    "tailscale:serve": "tailscale serve --set-path=/vub --bg http://127.0.0.1:4180"
   },
   "dependencies": {
     "@react-pdf/renderer": "^3.4.5",
