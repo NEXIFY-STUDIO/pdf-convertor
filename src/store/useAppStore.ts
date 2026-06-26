@@ -34,6 +34,8 @@ interface AppState {
   setBatchSettings: (settings: Partial<AppState['batchSettings']>) => void;
   generateBatch: () => void;
   cascadeBalances: () => void;
+  
+
 }
 
 const initialSourceOfTruth: SourceOfTruthType = {
@@ -64,9 +66,7 @@ const initialSourceOfTruth: SourceOfTruthType = {
     statement_date: '30.11.2025',
     statement_currency: 'EUR',
     statement_month: '11',
-    statement_year: '2025',
-    statement_cur_page: '1',
-    statement_all_pages: '1',
+    statement_year: '2025'
   },
   balances: {
     opening_balance: 0,

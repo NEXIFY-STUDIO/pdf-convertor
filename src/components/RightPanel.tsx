@@ -550,25 +550,93 @@ export default function RightPanel() {
   const [exportingZip, setExportingZip] = useState(false);
   const [zipProgress, setZipProgress] = useState<string>('');
 
+  // Memory-safe batched PDF generation for ZIP export
+  // Processes PDFs in chunks to prevent OOM with large batches (12+ months)
+  const BATCH_SIZE = 3; // Process 3 PDFs at a time
+
+  const checkMemoryBeforeExport = (): boolean => {
+    if (typeof window === 'undefined') return true;
+
+    // Estimate: 1 month ≈ 5MB PDF + overhead
+    const estimatedMemory = batchStatements.length * 5 * 1.5; // MB
+    
+    // Check available memory (non-standard API, only available in some browsers)
+    // @ts-ignore - performance.memory is non-standard but available in Chrome/Edge
+    if (window.performance && window.performance.memory) {
+      // @ts-ignore
+      const availableMB = window.performance.memory.jsHeapSizeLimit / 1024 / 1024;
+      if (estimatedMemory > availableMB * 0.7) {
+        alert(`Varovanie: Nedostatok pamäte! Odporúča sa generovať max. ${Math.floor(availableMB * 0.7 / 7.5)} výpisov naraz.`);
+        return false;
+      }
+    }
+    
+    // Warn for very large batches
+    if (batchStatements.length > 24) {
+      return confirm(`Varovanie: Generujete ${batchStatements.length} výpisov. Odporúča sa max. 12 naraz. Pokračovať?`);
+    }
+    
+    return true;
+  };
+
   const handleDownloadZip = async () => {
     if (batchStatements.length === 0) return;
+    
+    // Check memory before starting
+    if (!checkMemoryBeforeExport()) {
+      setExportingZip(false);
+      setZipProgress('');
+      return;
+    }
+
     setExportingZip(true);
-    setZipProgress('Spúšťam...');
+    setZipProgress('Inicializácia...');
+    
     try {
       const zip = new JSZip();
-      for (let i = 0; i < batchStatements.length; i++) {
-        const s = batchStatements[i];
-        setZipProgress(`PDF ${i + 1}/${batchStatements.length}`);
-        const blob = await pdf(<StatementDocument sourceOfTruth={s} />).toBlob();
-        const safeName = s.statement.statement_number?.replace(/\//g, '_') || `vypis_${i + 1}`;
-        zip.file(`Vypis_${safeName}.pdf`, blob);
+      const total = batchStatements.length;
+
+      // Process in batches to limit memory usage
+      for (let i = 0; i < total; i += BATCH_SIZE) {
+        const chunk = batchStatements.slice(i, i + BATCH_SIZE);
+        
+        // Process chunk in parallel
+        const pdfPromises = chunk.map(async (s, idxInChunk) => {
+          const absoluteIdx = i + idxInChunk;
+          setZipProgress(`Generujem ${absoluteIdx + 1}/${total}`);
+          
+          const blob = await pdf(<StatementDocument sourceOfTruth={s} />).toBlob();
+          const safeName = s.statement.statement_number?.replace(/\//g, '_') || `vypis_${absoluteIdx + 1}`;
+          
+          return { 
+            name: `Vypis_${safeName}.pdf`,
+            blob,
+            absoluteIdx 
+          };
+        });
+
+        const results = await Promise.all(pdfPromises);
+        
+        // Add files to ZIP and dereference blobs
+        results.forEach(({ name, blob }) => {
+          zip.file(name, blob, { binary: true });
+          // Blob is now owned by JSZip, original reference can be GC'd
+        });
       }
+
       setZipProgress('Komprimujem...');
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, `VUB_Vypisy_Batch_${batchStatements.length}_mesiacov.zip`);
+      const content = await zip.generateAsync({ 
+        type: 'blob', 
+        streamFiles: true,  // Enable streaming for large files
+        compression: 'DEFLATE', 
+        compressionOptions: { level: 6 }  // Balance speed vs compression
+      });
+
+      saveAs(content, `VUB_Vypisy_Batch_${total}_mesiacov.zip`);
+      
     } catch (err) {
       console.error('ZIP generation failed:', err);
-      alert('Chyba pri generovaní ZIP archívu.');
+      alert('Chyba pri generovaní ZIP archívu. Skúste zmeniť počet mesiacov alebo zreštartujte aplikáciu.');
     } finally {
       setExportingZip(false);
       setZipProgress('');

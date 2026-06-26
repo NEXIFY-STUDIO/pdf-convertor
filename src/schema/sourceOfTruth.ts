@@ -34,9 +34,7 @@ export const StatementDataSchema = z.object({
   statement_date: z.string().optional(),
   statement_currency: z.string().optional(),
   statement_month: z.string().optional(),
-  statement_year: z.string().optional(),
-  statement_cur_page: z.string().optional(),
-  statement_all_pages: z.string().optional(),
+  statement_year: z.string().optional()
 });
 
 export const BankDataSchema = z.object({
