@@ -842,7 +842,10 @@ export default function RightPanel() {
 
       <div className="ft-preview-body">
         {viewMode === 'pdf' ? (
-          <PDFViewer className="ft-pdf-viewer">
+          <PDFViewer 
+            key={`${sourceOfTruth.statement.statement_month}-${sourceOfTruth.statement.statement_year}-${sourceOfTruth.balances.opening_balance}-${sourceOfTruth.balances.closing_balance}`}
+            className="ft-pdf-viewer"
+          >
             <StatementDocument sourceOfTruth={sourceOfTruth} />
           </PDFViewer>
         ) : (

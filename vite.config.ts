@@ -41,6 +41,9 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    exclude: ['@react-pdf/renderer'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

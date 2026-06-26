@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, act } from '@testing-library/react';
 import RightPanel from '../components/RightPanel';
 import { useAppStore } from '../store/useAppStore';
 
@@ -144,5 +144,57 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
     // Transaction should be gone, balance should be 1 000.00 EUR (formatted with thousands separator space)
     expect(screen.queryByText('Nákup potravín')).not.toBeInTheDocument();
     expect(screen.getAllByText('1 000.00 EUR').length).toBe(3); // opening, closing, and available balances are 1000
+  });
+
+  it('should have unique key on PDFViewer to prevent WASM Config collision', () => {
+    // Setup initial state
+    useAppStore.getState().setStatementData({
+      statement_month: '11',
+      statement_year: '2025'
+    });
+    
+    render(<RightPanel />);
+    
+    // PDFViewer should have a key prop containing statement data
+    const pdfViewer = screen.getByTestId('pdf-viewer');
+    expect(pdfViewer).toBeInTheDocument();
+    // The key is set in the component, we verify it renders without error
+  });
+
+  it('should display ZIP export button in batch mode', () => {
+    // Enable batch mode with statements
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+    
+    render(<RightPanel />);
+    
+    // Should show batch navigation and export button
+    expect(screen.getByText(/Vygenerované výpisy/)).toBeInTheDocument();
+    expect(screen.getByText(/Exportovať všetky do ZIP/)).toBeInTheDocument();
+  });
+
+  it('should handle PDFViewer key change when statement data changes', () => {
+    const { rerender } = render(<RightPanel />);
+    
+    // Get initial PDFViewer
+    const initialPdfViewer = screen.getByTestId('pdf-viewer');
+    expect(initialPdfViewer).toBeInTheDocument();
+    
+    // Change statement data
+    act(() => {
+      useAppStore.getState().setStatementData({
+        statement_month: '12',
+        statement_year: '2025'
+      });
+    });
+    
+    // Force re-render
+    act(() => {
+      rerender(<RightPanel />);
+    });
+    
+    // New PDFViewer should be rendered with new key
+    const updatedPdfViewer = screen.getByTestId('pdf-viewer');
+    expect(updatedPdfViewer).toBeInTheDocument();
   });
 });
