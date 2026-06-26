@@ -155,10 +155,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
     
     render(<RightPanel />);
     
-    // PDFViewer should have a key prop containing statement data
-    const pdfViewer = screen.getByTestId('pdf-viewer');
-    expect(pdfViewer).toBeInTheDocument();
-    // The key is set in the component, we verify it renders without error
+    // PDFViewer should render without error (key prevents WASM collision)
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 
   it('should display ZIP export button in batch mode', () => {
@@ -174,13 +172,24 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
   });
 
   it('should handle PDFViewer key change when statement data changes', () => {
+    // Reset store to ensure clean state
+    useAppStore.setState({
+      sourceOfTruth: {
+        ...useAppStore.getState().sourceOfTruth,
+        statement: {
+          ...useAppStore.getState().sourceOfTruth.statement,
+          statement_month: '11',
+          statement_year: '2025'
+        }
+      }
+    });
+    
     const { rerender } = render(<RightPanel />);
     
-    // Get initial PDFViewer
-    const initialPdfViewer = screen.getByTestId('pdf-viewer');
-    expect(initialPdfViewer).toBeInTheDocument();
+    // PDFViewer should render with initial key
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
     
-    // Change statement data
+    // Change statement data - this changes the key
     act(() => {
       useAppStore.getState().setStatementData({
         statement_month: '12',
@@ -188,13 +197,13 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
       });
     });
     
-    // Force re-render
+    // Re-render component with new key
     act(() => {
       rerender(<RightPanel />);
     });
     
     // New PDFViewer should be rendered with new key
-    const updatedPdfViewer = screen.getByTestId('pdf-viewer');
-    expect(updatedPdfViewer).toBeInTheDocument();
+    // The key prop ensures clean unmount and new instance
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 });
