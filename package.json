@@ -13,6 +13,13 @@
     "test:stress": "vitest run src/test/MemoryProfiler.test.ts",
     "test:security": "vitest run src/test/security.test.ts",
     "test:coverage": "vitest --coverage",
+    "test:ai": "vitest run tests/production/ai_extraction.test.ts",
+    "test:pdf": "vitest run tests/production/pdf_generation.test.ts",
+    "test:visual": "vitest run tests/production/visual_regression.test.ts",
+    "test:data": "vitest run tests/production/data_validation.test.ts",
+    "test:production_sec": "vitest run tests/production/security.test.ts",
+    "test:performance": "vitest run tests/production/performance.test.ts",
+    "test:production": "npm run test:ai && npm run test:pdf && npm run test:visual && npm run test:data && npm run test:production_sec && npm run test:performance",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {

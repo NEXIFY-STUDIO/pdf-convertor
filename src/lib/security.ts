@@ -57,3 +57,31 @@ export function validateIBAN(iban: string): boolean {
     return false;
   }
 }
+
+/**
+ * Removes HTML tags from input string
+ */
+export function sanitizeInput(input: string): string {
+  if (!input) return input;
+  return input.replace(/<[^>]*>?/gm, '');
+}
+
+/**
+ * Sanitizes transaction data by removing HTML tags and cleaning numeric symbols
+ */
+export function sanitizeTransaction(tx: any): any {
+  const cleanTx = { ...tx };
+  if (cleanTx.popis) {
+    cleanTx.popis = sanitizeInput(cleanTx.popis);
+  }
+  if (cleanTx.vs) {
+    cleanTx.vs = cleanTx.vs.replace(/\D/g, '');
+  }
+  if (cleanTx.ks) {
+    cleanTx.ks = cleanTx.ks.replace(/\D/g, '');
+  }
+  if (cleanTx.ss) {
+    cleanTx.ss = cleanTx.ss.replace(/\D/g, '');
+  }
+  return cleanTx;
+}
