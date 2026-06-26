@@ -76,6 +76,41 @@ describe('Source of Truth Schema Validation', () => {
         expect(result.error.errors[0].message).toBe('Dátum realizácie je povinný');
       }
     });
+
+    it('should validate transaction with v2 PDF detail fields', () => {
+      const tx = {
+        date_realiz: '01.01.2025',
+        date_valuta: '01.01.2025',
+        amount: -92,
+        popis: 'ZSE ENERGIA',
+        details: ['SK11 0200 0000 0000 0000 0001', 'Názov: energia'],
+        bank_ref: '18071823AJIBR',
+        fee_type: 'L',
+        type: 'outgoing' as const,
+        is_fee: false,
+      };
+      const result = TransactionSchema.safeParse(tx);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.details).toHaveLength(2);
+        expect(result.data.bank_ref).toBe('18071823AJIBR');
+        expect(result.data.fee_type).toBe('L');
+      }
+    });
+
+    it('should accept transaction without optional v2 fields', () => {
+      const result = TransactionSchema.safeParse({
+        date_realiz: '01.01.2025',
+        date_valuta: '01.01.2025',
+        amount: 10,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.details).toBeUndefined();
+        expect(result.data.bank_ref).toBeUndefined();
+        expect(result.data.fee_type).toBeUndefined();
+      }
+    });
   });
 
   describe('BankDataSchema', () => {

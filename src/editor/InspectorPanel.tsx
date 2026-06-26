@@ -10,9 +10,8 @@ function formatMoney(val: number, currency = 'EUR') {
 }
 
 function getFieldValue(section: FieldDef['section'], key: string, sourceOfTruth: ReturnType<typeof useAppStore.getState>['sourceOfTruth']): string {
-  if (section === 'balances') {
-    if (key === 'opening_balance') return String(sourceOfTruth.balances.opening_balance);
-    return '';
+  if (section === 'balances' && key === 'opening_balance') {
+    return String(sourceOfTruth.balances.opening_balance);
   }
   const data = sourceOfTruth[section] as Record<string, unknown>;
   const val = data[key];

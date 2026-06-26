@@ -3,6 +3,14 @@ import { render, fireEvent, screen, act, within } from '@testing-library/react';
 import RightPanel from '../components/RightPanel';
 import { useAppStore } from '../store/useAppStore';
 
+const mockDownloadZip = vi.fn().mockResolvedValue(undefined);
+const mockCheckMemory = vi.fn().mockReturnValue(true);
+
+vi.mock('../export/zipExport', () => ({
+  checkMemoryBeforeExport: (...args: unknown[]) => mockCheckMemory(...args),
+  downloadStatementsZip: (...args: unknown[]) => mockDownloadZip(...args),
+}));
+
 vi.mock('@react-pdf/renderer', () => {
   return {
     PDFViewer: ({ children }: any) => <div data-testid="pdf-viewer">{children}</div>,
@@ -106,6 +114,14 @@ describe('RightPanel PDF Preview & Inspector', () => {
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 
+  it('should not call ZIP export when batch is empty', async () => {
+    mockDownloadZip.mockClear();
+    useAppStore.setState({ batchMode: true, batchStatements: [] });
+    render(<RightPanel />);
+    expect(screen.queryByText(/Exportovať všetky do ZIP/)).not.toBeInTheDocument();
+    expect(mockDownloadZip).not.toHaveBeenCalled();
+  });
+
   it('should display ZIP export button in batch mode', () => {
     useAppStore.getState().setBatchMode(true);
     useAppStore.getState().generateBatch();
@@ -114,6 +130,79 @@ describe('RightPanel PDF Preview & Inspector', () => {
 
     expect(screen.getByText(/Vygenerované výpisy/)).toBeInTheDocument();
     expect(screen.getByText(/Exportovať všetky do ZIP/)).toBeInTheDocument();
+  });
+
+  it('should toggle Inspector panel closed', () => {
+    render(<RightPanel />);
+    fireEvent.click(screen.getByRole('button', { name: /^Inspector$/i }));
+    expect(screen.getByRole('button', { name: /Skryť Inspector/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Skryť Inspector/i }));
+    expect(screen.queryByText(/Transakcie \(\d+\)/)).not.toBeInTheDocument();
+  });
+
+  it('should apply ft-preview-split class when Inspector open', () => {
+    const { container } = render(<RightPanel />);
+    fireEvent.click(screen.getByRole('button', { name: /Inspector/i }));
+    expect(container.querySelector('.ft-preview-split')).toBeInTheDocument();
+  });
+
+  it('should switch batch statement via timeline chip', () => {
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+    render(<RightPanel />);
+    const chips = screen.getAllByRole('button').filter((b) => b.className.includes('ft-batch-chip'));
+    expect(chips.length).toBeGreaterThan(1);
+    fireEvent.click(chips[1]);
+    expect(useAppStore.getState().selectedBatchIndex).toBe(1);
+  });
+
+  it('should trigger ZIP export when memory check passes', async () => {
+    mockCheckMemory.mockReturnValue(true);
+    mockDownloadZip.mockClear();
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+
+    render(<RightPanel />);
+    fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+
+    await vi.waitFor(() => {
+      expect(mockCheckMemory).toHaveBeenCalled();
+      expect(mockDownloadZip).toHaveBeenCalled();
+    });
+  });
+
+  it('should show alert when ZIP export throws', async () => {
+    const alert = vi.fn();
+    vi.stubGlobal('alert', alert);
+    mockCheckMemory.mockReturnValue(true);
+    mockDownloadZip.mockRejectedValueOnce(new Error('ZIP fail'));
+
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+
+    render(<RightPanel />);
+    fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+
+    await vi.waitFor(() => {
+      expect(alert).toHaveBeenCalledWith(
+        expect.stringContaining('Chyba pri generovaní ZIP archívu'),
+      );
+    });
+  });
+
+  it('should skip ZIP export when memory check fails', async () => {
+    mockCheckMemory.mockReturnValue(false);
+    mockDownloadZip.mockClear();
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+
+    render(<RightPanel />);
+    fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+
+    await vi.waitFor(() => {
+      expect(mockCheckMemory).toHaveBeenCalled();
+    });
+    expect(mockDownloadZip).not.toHaveBeenCalled();
   });
 
   it('should handle PDFViewer key change when statement data changes', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { parseStatementWithAI, preprocessVUBText } from '../lib/mistralClient';
+import { parseStatementWithAI, preprocessVUBText, normalizeAIResult } from '../lib/mistralClient';
 
 describe('parseStatementWithAI', () => {
   beforeEach(() => {
@@ -94,6 +94,35 @@ describe('parseStatementWithAI', () => {
     await expect(
       parseStatementWithAI('statement text', 'mock-api-key')
     ).rejects.toThrow('Mistral API nevrátilo žiadny obsah.');
+  });
+});
+
+describe('normalizeAIResult v2 transaction fields', () => {
+  it('should preserve details, bank_ref and fee_type on transactions', () => {
+    const result = normalizeAIResult({
+      transactions: [
+        {
+          description: 'ZSE ENERGIA',
+          details: ['SK11 0200', 'Názov: energia'],
+          bank_ref: 'REF-001',
+          fee_type: 'L',
+          date_valuta: '01.07.2022',
+          amount: -92,
+        },
+      ],
+    });
+
+    expect(result.transactions[0].popis).toBe('ZSE ENERGIA');
+    expect(result.transactions[0].details).toEqual(['SK11 0200', 'Názov: energia']);
+    expect(result.transactions[0].bank_ref).toBe('REF-001');
+    expect(result.transactions[0].fee_type).toBe('L');
+  });
+
+  it('should filter empty strings from details array', () => {
+    const result = normalizeAIResult({
+      transactions: [{ description: 'Test', details: ['ok', '', '  '] }],
+    });
+    expect(result.transactions[0].details).toEqual(['ok']);
   });
 });
 
