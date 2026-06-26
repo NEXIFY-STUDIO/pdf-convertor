@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createWithEqualityFn } from 'zustand/traditional';
 import { SourceOfTruthType, TransactionType, ClientDataType, StatementDataType, BankDataType, ExportSettingsType } from '../schema/sourceOfTruth';
 
 interface AppState {
@@ -96,7 +96,7 @@ const initialBatchSettings = {
   ]
 };
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = createWithEqualityFn<AppState>((set, get) => ({
   sourceOfTruth: initialSourceOfTruth,
   mistralApiKey: typeof window !== 'undefined' 
     ? window.localStorage?.getItem('mistral_api_key') || (import.meta.env.VITE_MISTRAL_API_KEY as string) || '' 

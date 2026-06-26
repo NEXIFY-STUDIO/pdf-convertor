@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, screen, act, within } from '@testing-library/react';
+import { render, fireEvent, screen, act, within, waitFor } from '@testing-library/react';
 import RightPanel from '../components/RightPanel';
 import { useAppStore } from '../store/useAppStore';
 
@@ -163,9 +163,11 @@ describe('RightPanel PDF Preview & Inspector', () => {
     useAppStore.getState().generateBatch();
 
     render(<RightPanel />);
-    fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    });
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(mockCheckMemory).toHaveBeenCalled();
       expect(mockDownloadZip).toHaveBeenCalled();
     });
@@ -173,6 +175,7 @@ describe('RightPanel PDF Preview & Inspector', () => {
 
   it('should show alert when ZIP export throws', async () => {
     const alert = vi.fn();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal('alert', alert);
     mockCheckMemory.mockReturnValue(true);
     mockDownloadZip.mockRejectedValueOnce(new Error('ZIP fail'));
@@ -181,13 +184,16 @@ describe('RightPanel PDF Preview & Inspector', () => {
     useAppStore.getState().generateBatch();
 
     render(<RightPanel />);
-    fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    });
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(alert).toHaveBeenCalledWith(
         expect.stringContaining('Chyba pri generovaní ZIP archívu'),
       );
     });
+    consoleSpy.mockRestore();
   });
 
   it('should skip ZIP export when memory check fails', async () => {
@@ -197,9 +203,11 @@ describe('RightPanel PDF Preview & Inspector', () => {
     useAppStore.getState().generateBatch();
 
     render(<RightPanel />);
-    fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    });
 
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(mockCheckMemory).toHaveBeenCalled();
     });
     expect(mockDownloadZip).not.toHaveBeenCalled();

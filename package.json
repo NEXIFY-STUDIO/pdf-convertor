@@ -11,6 +11,7 @@
     "test:unit": "vitest run src/test/sourceOfTruth.test.ts src/test/mistralClient.test.ts",
     "test:integration": "vitest run src/test/LeftPanel.integration.test.tsx src/test/RightPanel.test.tsx src/test/BatchGenerator.test.tsx src/test/VubLayout.test.tsx",
     "test:v2": "vitest run src/test/normalizeTransaction.test.ts src/test/transactionRender.test.ts src/test/fieldBlueprint.test.ts src/test/InspectorPanel.test.tsx src/test/zipExport.test.ts src/test/RightPanel.test.tsx",
+    "test:v2:coverage": "vitest run --coverage src/test/normalizeTransaction.test.ts src/test/transactionRender.test.ts src/test/fieldBlueprint.test.ts src/test/InspectorPanel.test.tsx src/test/zipExport.test.ts src/test/RightPanel.test.tsx",
     "test:stress": "vitest run src/test/MemoryProfiler.test.ts",
     "test:security": "vitest run src/test/security.test.ts",
     "test:coverage": "vitest --coverage",
