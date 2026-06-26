@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SourceOfTruthType } from '../schema/sourceOfTruth';
 
 const mockToBlob = vi.fn().mockResolvedValue(new Blob(['pdf-content']));
-const mockPdf = vi.fn(() => ({ toBlob: mockToBlob }));
+const mockPdf = vi.fn((_element?: unknown) => ({ toBlob: mockToBlob }));
 const mockZipFile = vi.fn();
 const mockGenerateAsync = vi.fn().mockResolvedValue(new Blob(['zip-content']));
 const mockSaveAs = vi.fn();
@@ -12,7 +12,7 @@ vi.mock('../pdf/StatementDocument', () => ({
 }));
 
 vi.mock('@react-pdf/renderer', () => ({
-  pdf: (...args: unknown[]) => mockPdf(...args),
+  pdf: (element: unknown) => mockPdf(element),
 }));
 
 vi.mock('jszip', () => ({

@@ -1,24 +1,19 @@
-// Automaticky vygenerovaný middleware pre Tailscale ochranu
-const TAILSCALE_SECRET = process.env.TAILSCALE_SECRET || '23513900zZz#####';
-
 export default function middleware(request) {
   const authHeader = request.headers.get('x-tailscale-auth');
+  const secret = process.env.TAILSCALE_SECRET;
 
-  if (authHeader !== TAILSCALE_SECRET) {
+  if (!secret) {
+    console.error('CRITICAL: TAILSCALE_SECRET is not set in environment variables!');
+  }
+
+  if (authHeader !== secret) {
     return new Response(
-      JSON.stringify({ error: 'Unauthorized: Access restricted to Tailscale network only.' }),
-      { 
-        status: 401, 
-        headers: { 'content-type': 'application/json' } 
-      }
+      JSON.stringify({ error: 'Unauthorized: Access restricted.' }),
+      { status: 401, headers: { 'content-type': 'application/json' } }
     );
   }
 
-  return new Response(null, {
-    headers: { 'x-middleware-next': '1' }
-  });
+  return new Response(null, { headers: { 'x-middleware-next': '1' } });
 }
 
-export const config = {
-  matcher: '/(.*)',
-}
+export const config = { matcher: '/(.*)' }
