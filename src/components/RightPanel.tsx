@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useAppStore } from '../store/useAppStore';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, Image, pdf } from '@react-pdf/renderer';
 import JSZip from 'jszip';
@@ -247,6 +248,28 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
 });
+
+// Memoized version of StatementDocument to prevent unnecessary re-renders
+export const MemoizedStatementDocument = React.memo(
+  StatementDocument,
+  (prevProps, nextProps) => {
+    // Only re-render if critical business data changed
+    const prev = prevProps.sourceOfTruth;
+    const next = nextProps.sourceOfTruth;
+    
+    return (
+      prev.statement.statement_month === next.statement.statement_month &&
+      prev.statement.statement_year === next.statement.statement_year &&
+      prev.balances.opening_balance === next.balances.opening_balance &&
+      prev.balances.closing_balance === next.balances.closing_balance &&
+      prev.transactions.length === next.transactions.length &&
+      // Shallow compare transactions for performance
+      shallow(prev.bank, next.bank) &&
+      shallow(prev.client, next.client) &&
+      shallow(prev.statement, next.statement)
+    );
+  }
+);
 
 export const StatementDocument = ({ sourceOfTruth }: { sourceOfTruth: any }) => {
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
@@ -528,19 +551,19 @@ export const StatementDocument = ({ sourceOfTruth }: { sourceOfTruth: any }) => 
 };
 
 export default function RightPanel() {
-  const { 
-    sourceOfTruth, 
-    setBankData, 
-    setClientData, 
-    setStatementData, 
-    setOpeningBalance, 
-    setTransactions,
-    // Batch variables
-    batchMode,
-    batchStatements,
-    selectedBatchIndex,
-    setSelectedBatchIndex
-  } = useAppStore();
+  // Granular Zustand selectors to prevent unnecessary re-renders
+  const sourceOfTruth = useAppStore(state => state.sourceOfTruth, shallow);
+  const setBankData = useAppStore(state => state.setBankData);
+  const setClientData = useAppStore(state => state.setClientData);
+  const setStatementData = useAppStore(state => state.setStatementData);
+  const setOpeningBalance = useAppStore(state => state.setOpeningBalance);
+  const setTransactions = useAppStore(state => state.setTransactions);
+  
+  // Batch state selectors
+  const batchMode = useAppStore(state => state.batchMode);
+  const batchStatements = useAppStore(state => state.batchStatements, shallow);
+  const selectedBatchIndex = useAppStore(state => state.selectedBatchIndex);
+  const setSelectedBatchIndex = useAppStore(state => state.setSelectedBatchIndex);
 
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
 

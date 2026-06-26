@@ -16,6 +16,10 @@ async function downloadStatementPdf(sourceOfTruth: any): Promise<void> {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  // Clean up object URL to prevent memory leaks
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 export default function LeftPanel() {
