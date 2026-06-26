@@ -5,54 +5,50 @@ import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, Image, pdf } f
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-const getFontPath = (fontName: string) => {
-  if (typeof window === 'undefined') {
-    return `public/fonts/${fontName}`;
-  }
-  return `/fonts/${fontName}`;
-};
-
-// Register Cousine font for full Slovak character and punctuation (Latin extended) support
+// ============================================
+// 1. FONT REGISTRATION (DejaVu Sans for Slovak diacritics)
+// ============================================
 Font.register({
-  family: 'Cousine',
+  family: 'DejaVu Sans',
   fonts: [
-    { src: getFontPath('Cousine-Regular.ttf'), fontWeight: 400 },
-    { src: getFontPath('Cousine-Bold.ttf'), fontWeight: 700 }
-  ]
+    { src: '/fonts/DejaVuSans.ttf', fontWeight: 400 },
+    { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 700 },
+  ],
 });
 
 Font.register({
-  family: 'Inter',
+  family: 'DejaVu Sans Mono',
   fonts: [
-    { src: getFontPath('Inter-Regular.otf'), fontWeight: 400 },
-    { src: getFontPath('Inter-Bold.otf'), fontWeight: 700 }
-  ]
+    { src: '/fonts/DejaVuSansMono.ttf', fontWeight: 400 },
+    { src: '/fonts/DejaVuSansMono-Bold.ttf', fontWeight: 700 },
+  ],
 });
 
+// ============================================
+// 2. STYLES (Adjusted for A4 and DejaVu fonts)
+// ============================================
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 18.5,
-    paddingBottom: 25,
-    paddingLeft: '18mm',
-    paddingRight: '18mm',
-    fontSize: 9,
-    fontFamily: 'Inter',
-    color: '#000000',
+    padding: '15mm',  // ZMENA: Z 18mm na 15mm (viac miesta)
+    fontFamily: 'DejaVu Sans',
+    color: '#000000',  // ZMENA: Z #1a1a1a na #000000
+    fontSize: 7,
+    lineHeight: 1.0,   // ZMENA: Z 1.2 na 1.0 (tesnejšie riadky)
     backgroundColor: '#ffffff',
   },
   header: {
-    fontFamily: 'Inter',
+    fontFamily: 'DejaVu Sans',
     fontSize: 12,
     fontWeight: 700,
     marginBottom: 15,
   },
   text: {
-    fontFamily: 'Inter',
+    fontFamily: 'DejaVu Sans',
     fontSize: 8,
     color: '#000000',
   },
   smallText: {
-    fontFamily: 'Inter',
+    fontFamily: 'DejaVu Sans',
     fontSize: 7,
     color: '#000000',
   },
