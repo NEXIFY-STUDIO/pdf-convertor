@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { shallow } from 'zustand/shallow';
 import { useAppStore } from '../store/useAppStore';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, Image, pdf } from '@react-pdf/renderer';
