@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { shallow } from 'zustand/shallow';
 import { useAppStore } from '../store/useAppStore';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font, Image, pdf } from '@react-pdf/renderer';
@@ -249,29 +249,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// Memoized version of StatementDocument to prevent unnecessary re-renders
-export const MemoizedStatementDocument = React.memo(
-  StatementDocument,
-  (prevProps, nextProps) => {
-    // Only re-render if critical business data changed
-    const prev = prevProps.sourceOfTruth;
-    const next = nextProps.sourceOfTruth;
-    
-    return (
-      prev.statement.statement_month === next.statement.statement_month &&
-      prev.statement.statement_year === next.statement.statement_year &&
-      prev.balances.opening_balance === next.balances.opening_balance &&
-      prev.balances.closing_balance === next.balances.closing_balance &&
-      prev.transactions.length === next.transactions.length &&
-      // Shallow compare transactions for performance
-      shallow(prev.bank, next.bank) &&
-      shallow(prev.client, next.client) &&
-      shallow(prev.statement, next.statement)
-    );
-  }
-);
-
-export const StatementDocument = ({ sourceOfTruth }: { sourceOfTruth: any }) => {
+export const StatementDocument = memo(({ sourceOfTruth }: { sourceOfTruth: any }) => {
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
 
   // Format currency output helper
@@ -548,8 +526,17 @@ export const StatementDocument = ({ sourceOfTruth }: { sourceOfTruth: any }) => 
       </Page>
     </Document>
   );
-};
-
+}, (prevProps, nextProps) => {
+  const prev = prevProps.sourceOfTruth;
+  const next = nextProps.sourceOfTruth;
+  return (
+    prev.statement.statement_month === next.statement.statement_month &&
+    prev.statement.statement_year === next.statement.statement_year &&
+    prev.balances.opening_balance === next.balances.opening_balance &&
+    prev.balances.closing_balance === next.balances.closing_balance &&
+    prev.transactions.length === next.transactions.length
+  );
+});
 export default function RightPanel() {
   // Granular Zustand selectors to prevent unnecessary re-renders
   const sourceOfTruth = useAppStore(state => state.sourceOfTruth, shallow);
