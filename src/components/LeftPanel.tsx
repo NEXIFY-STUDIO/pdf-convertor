@@ -2,8 +2,9 @@ import { useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import Papa from 'papaparse';
 import { TransactionType } from '../schema/sourceOfTruth';
+import { normalizeTransactions } from '../shared/normalizeTransaction';
 import { pdf } from '@react-pdf/renderer';
-import { StatementDocument } from './RightPanel';
+import { StatementDocument } from '../pdf/StatementDocument';
 import { parseStatementWithAI } from '../lib/mistralClient';
 
 async function downloadStatementPdf(sourceOfTruth: any): Promise<void> {
@@ -94,48 +95,7 @@ export default function LeftPanel() {
     }
   };
 
-  const mapJsonTransactions = (rows: any[]): TransactionType[] => {
-    return rows.map((row: any) => {
-      const dateRealiz = row.transfer_confirmed_date || row.date_realiz || row.Date || row.date || '';
-      const dateBooking = row.date_booking || dateRealiz;
-      const dateValuta = row.transfer_currency_date || row.date_valuta || row.Date || row.date || dateRealiz || '';
-      
-      let amt = 0;
-      if (row.transfer_amount !== undefined) {
-        amt = parseFloat(row.transfer_amount);
-        if (row.transfer_type === 'outgoing') {
-          amt = -Math.abs(amt);
-        } else {
-          amt = Math.abs(amt);
-        }
-      } else {
-        amt = parseFloat(row.Amount || row.amount || '0');
-      }
-      
-      const popis = row.transfer_description || row.popis || row.Description || '';
-      const account = row.transfer_recipient_iban || row.account || '';
-      const vs = row.transfer_variable_symbol || row.vs || '';
-      const ks = row.transfer_constant_symbol || row.ks || '';
-      const ss = row.transfer_specific_symbol || row.ss || '';
-      
-      const isFee = row.is_fee === true || row.type === 'fee' || false;
-      const type = (row.type === 'fee' || isFee) ? 'fee' : (row.transfer_type || row.type || (amt >= 0 ? 'incoming' : 'outgoing')) as 'incoming' | 'outgoing' | 'fee';
-
-      return {
-        date_realiz: dateRealiz,
-        date_booking: dateBooking,
-        date_valuta: dateValuta,
-        amount: amt,
-        popis,
-        account,
-        vs,
-        ks,
-        ss,
-        type,
-        is_fee: isFee
-      };
-    });
-  };
+  const mapJsonTransactions = (rows: unknown[]): TransactionType[] => normalizeTransactions(rows);
 
   const handleFileUpload = (event: any) => {
     const file = event.target.files?.[0];

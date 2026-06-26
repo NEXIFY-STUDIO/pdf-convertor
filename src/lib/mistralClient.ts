@@ -96,10 +96,16 @@ export function normalizeAIResult(data: any, text?: string): any {
   if (Array.isArray(data.transactions)) {
     data.transactions = data.transactions.map((tx: any) => {
       const desc = tx.description || tx.popis || '';
+      const details = Array.isArray(tx.details)
+        ? tx.details.map((d: unknown) => String(d).trim()).filter(Boolean)
+        : undefined;
       return {
         ...tx,
         popis: desc,
-        description: desc
+        description: desc,
+        details,
+        bank_ref: tx.bank_ref || undefined,
+        fee_type: tx.fee_type || undefined,
       };
     });
   }
@@ -288,7 +294,10 @@ export async function parseStatementWithAI(
       "date_valuta": "01.07.2022",   // Dátum valuty (povinný)
       "amount": -92.00,              // ZÁPORNÉ pre výdavky, KLADNÉ pre príjmy
       "account": "SK11 0200 0000 2700 0210 7012",
-      "description": "ZSE ENERGIA, A.S. - elektrika",  // ⭐ POPIS JE POVINNÝ!
+      "description": "ZSE ENERGIA, A.S. - elektrika",
+      "details": ["SK11 0200 0000 2700 0210 7012", "ZSE ENERGIA, A.S.", "Názov: elektrika", "BIC: SUBASKBX"],
+      "bank_ref": "18071823AJIBR",
+      "fee_type": null,
       "vs": "6310319204",
       "ks": null,
       "ss": null,
@@ -302,6 +311,9 @@ export async function parseStatementWithAI(
 1. **Stránky**: Extrahuj z **VŠETKÝCH** strán (1-4). Ak výpis má 4 strany, **nesmieš** vynechať 3. a 4. stranu!
 2. **Popisy**: **Vždy** extrahuj popis transakcie (názov protistrany + účel platby).
    - Príklady: "ZSE ENERGIA, A.S. - elektrika", "Vedenie konta", "SEPA Europrevod"
+   - **details**: pole textových riadkov pre PDF stĺpec „Popis transakcie" (IBAN, názov, BIC, referencia…)
+   - **bank_ref**: banková referencia transakcie (ak je v texte)
+   - **fee_type**: typ poplatku I/X/L (ak je uvedený)
 3. **Dátumy**: Formát DD.MM.YYYY. Ak je v texte len DD.MM, doplň rok z hlavičky (napr. "Por. číslo: 7/2022" → 2022).
 4. **Symboly**: Odstráň **VŠETKY** nečíselné znaky (lomky, medzery, písmená). Ak chýbajú, vráť null.
 5. **Suma**: Výdavky majú **ZÁPORNÉ** znamienko, príjmy **KLADNÉ**.

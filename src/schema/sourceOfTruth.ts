@@ -12,6 +12,9 @@ export const TransactionSchema = z.object({
   ss: z.string().optional(),
   type: z.enum(['incoming', 'outgoing', 'fee']).default('outgoing'),
   popis: z.string().optional(),
+  details: z.array(z.string()).optional(),
+  bank_ref: z.string().optional(),
+  fee_type: z.string().optional(),
   is_fee: z.boolean().default(false),
 });
 
