@@ -3,14 +3,16 @@ import { z } from 'zod';
 export const TransactionSchema = z.object({
   id: z.string().optional(),
   date_realiz: z.string().min(1, 'Dátum realizácie je povinný'),
+  date_booking: z.string().optional(),
   date_valuta: z.string().min(1, 'Dátum valuty je povinný'),
   amount: z.number(),
   account: z.string().optional(),
   vs: z.string().optional(),
   ks: z.string().optional(),
   ss: z.string().optional(),
-  type: z.string().optional(),
+  type: z.enum(['incoming', 'outgoing', 'fee']).default('outgoing'),
   popis: z.string().optional(),
+  is_fee: z.boolean().default(false),
 });
 
 export const ClientDataSchema = z.object({
@@ -34,13 +36,12 @@ export const StatementDataSchema = z.object({
   statement_date: z.string().optional(),
   statement_currency: z.string().optional(),
   statement_month: z.string().optional(),
-  statement_year: z.string().optional(),
-  statement_cur_page: z.string().optional(),
-  statement_all_pages: z.string().optional(),
+  statement_year: z.string().optional()
 });
 
 export const BankDataSchema = z.object({
   bank_logo_id: z.string().min(1, 'Bank logo ID je povinné'),
+  bank_logo_image: z.string().optional(),
   bank_register_info: z.string().min(1, 'Registračné info je povinné'),
   bank_outlet_id: z.string().min(1, 'Pobočka je povinná'),
   bank_outlet_address: z.string().min(1, 'Adresa pobočky je povinná'),
@@ -51,6 +52,7 @@ export const BalancesSchema = z.object({
   closing_balance: z.number(),
   total_credit: z.number(),
   total_debit: z.number(),
+  total_fees: z.number().default(0),
 });
 
 export const ExportSettingsSchema = z.object({

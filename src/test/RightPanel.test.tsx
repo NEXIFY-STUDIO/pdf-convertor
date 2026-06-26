@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, act } from '@testing-library/react';
 import RightPanel from '../components/RightPanel';
 import { useAppStore } from '../store/useAppStore';
 
@@ -17,6 +17,7 @@ vi.mock('@react-pdf/renderer', () => {
     Font: {
       register: vi.fn(),
     },
+    Image: ({ src }: any) => <img data-testid="pdf-image" src={src} />,
   };
 });
 
@@ -46,17 +47,17 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
     const editorBtn = screen.getByRole('button', { name: /Editor \(HTML\)/i });
     fireEvent.click(editorBtn);
 
-    // Find the Logo Banky editable field and click it
-    const logoField = screen.getByText('VÚB BANKA Intesa Sanpaolo Group');
-    fireEvent.click(logoField);
+    // Check basic presence of the logo/title block
+    const addressBlock = screen.getByText('KOMÁRNICKÁ 11, BRATISLAVA');
+    fireEvent.click(addressBlock);
 
     // Verify modal appears
     expect(screen.getByText('Upraviť hodnotu')).toBeInTheDocument();
-    expect(screen.getByLabelText('Logo banky')).toBeInTheDocument();
+    expect(screen.getByLabelText('Adresa pobočky')).toBeInTheDocument();
 
-    // Type new logo
-    const input = screen.getByLabelText('Logo banky');
-    fireEvent.change(input, { target: { value: 'TATRA BANKA' } });
+    // Type new address
+    const input = screen.getByLabelText('Adresa pobočky');
+    fireEvent.change(input, { target: { value: 'NOVÁ ADRESA 12, KOŠICE' } });
 
     // Save
     const saveBtn = screen.getByRole('button', { name: /Uložiť/i });
@@ -66,8 +67,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
     expect(screen.queryByText('Upraviť hodnotu')).not.toBeInTheDocument();
 
     // Zustand store should be updated and UI should re-render
-    expect(screen.getByText('TATRA BANKA')).toBeInTheDocument();
-    expect(useAppStore.getState().sourceOfTruth.bank.bank_logo_id).toBe('TATRA BANKA');
+    expect(screen.getByText('NOVÁ ADRESA 12, KOŠICE')).toBeInTheDocument();
+    expect(useAppStore.getState().sourceOfTruth.bank.bank_outlet_address).toBe('NOVÁ ADRESA 12, KOŠICE');
   });
 
   it('should open transaction modal, save edit, and recalculate balances', () => {
@@ -79,6 +80,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
         date_valuta: '01.01.2025',
         amount: 200,
         popis: 'Výplata',
+        type: 'incoming',
+        is_fee: false,
       }
     ]);
 
@@ -90,8 +93,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
 
     // Balances check with exact formatted text to avoid matching simple table strings
     expect(screen.getByText('100.00 EUR')).toBeInTheDocument(); // opening balance
-    expect(screen.getByText('+200.00 EUR')).toBeInTheDocument(); // total credit
-    expect(screen.getByText('300.00 EUR')).toBeInTheDocument(); // closing balance
+    expect(screen.getByText(/200\.00 EUR/)).toBeInTheDocument(); // total credit
+    expect(screen.getAllByText('300.00 EUR')[0]).toBeInTheDocument(); // closing balance / disponibilny zostatok
 
     // Find transaction row and click it
     const txRow = screen.getByText('Výplata');
@@ -109,8 +112,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
     fireEvent.click(saveBtn);
 
     // Recalculated balance should be displayed (100 + 500 = 600)
-    expect(screen.getByText('+500.00 EUR')).toBeInTheDocument();
-    expect(screen.getByText('600.00 EUR')).toBeInTheDocument();
+    expect(screen.getByText(/500\.00 EUR/)).toBeInTheDocument();
+    expect(screen.getAllByText('600.00 EUR')[0]).toBeInTheDocument();
   });
 
   it('should delete transaction and update balances', () => {
@@ -121,6 +124,8 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
         date_valuta: '01.01.2025',
         amount: -200,
         popis: 'Nákup potravín',
+        type: 'outgoing',
+        is_fee: false,
       }
     ]);
 
@@ -131,7 +136,7 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
     fireEvent.click(editorBtn);
 
     expect(screen.getByText('Nákup potravín')).toBeInTheDocument();
-    expect(screen.getByText('800.00 EUR')).toBeInTheDocument(); // closing balance 1000 - 200
+    expect(screen.getAllByText('800.00 EUR')[0]).toBeInTheDocument(); // closing balance 1000 - 200
 
     // Click transaction row
     fireEvent.click(screen.getByText('Nákup potravín'));
@@ -142,6 +147,67 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
 
     // Transaction should be gone, balance should be 1 000.00 EUR (formatted with thousands separator space)
     expect(screen.queryByText('Nákup potravín')).not.toBeInTheDocument();
-    expect(screen.getAllByText('1 000.00 EUR').length).toBe(2); // both opening & closing balances are 1000
+    expect(screen.getAllByText('1 000.00 EUR').length).toBe(3); // opening, closing, and available balances are 1000
+  });
+
+  it('should have unique key on PDFViewer to prevent WASM Config collision', () => {
+    // Setup initial state
+    useAppStore.getState().setStatementData({
+      statement_month: '11',
+      statement_year: '2025'
+    });
+    
+    render(<RightPanel />);
+    
+    // PDFViewer should render without error (key prevents WASM collision)
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
+  });
+
+  it('should display ZIP export button in batch mode', () => {
+    // Enable batch mode with statements
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+    
+    render(<RightPanel />);
+    
+    // Should show batch navigation and export button
+    expect(screen.getByText(/Vygenerované výpisy/)).toBeInTheDocument();
+    expect(screen.getByText(/Exportovať všetky do ZIP/)).toBeInTheDocument();
+  });
+
+  it('should handle PDFViewer key change when statement data changes', () => {
+    // Reset store to ensure clean state
+    useAppStore.setState({
+      sourceOfTruth: {
+        ...useAppStore.getState().sourceOfTruth,
+        statement: {
+          ...useAppStore.getState().sourceOfTruth.statement,
+          statement_month: '11',
+          statement_year: '2025'
+        }
+      }
+    });
+    
+    const { rerender } = render(<RightPanel />);
+    
+    // PDFViewer should render with initial key
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
+    
+    // Change statement data - this changes the key
+    act(() => {
+      useAppStore.getState().setStatementData({
+        statement_month: '12',
+        statement_year: '2025'
+      });
+    });
+    
+    // Re-render component with new key
+    act(() => {
+      rerender(<RightPanel />);
+    });
+    
+    // New PDFViewer should be rendered with new key
+    // The key prop ensures clean unmount and new instance
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 });

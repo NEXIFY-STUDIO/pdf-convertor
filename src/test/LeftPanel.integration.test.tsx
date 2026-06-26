@@ -8,7 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { SourceOfTruthType, SourceOfTruthSchema } from '../schema/sourceOfTruth';
 
 // Helper to set up store with test data
-const setupStoreWithData = (data: Partial<SourceOfTruthType> = {}) => {
+const setupStoreWithData = (data: any = {}) => {
   const defaultData: SourceOfTruthType = {
     bank: {
       bank_logo_id: 'VÚB BANKA Intesa Sanpaolo Group',
@@ -34,6 +34,7 @@ const setupStoreWithData = (data: Partial<SourceOfTruthType> = {}) => {
       closing_balance: 1000,
       total_credit: 0,
       total_debit: 0,
+      total_fees: 0,
     },
     transactions: [],
     exportSettings: {
@@ -42,6 +43,12 @@ const setupStoreWithData = (data: Partial<SourceOfTruthType> = {}) => {
     },
   };
 
+  const processedTransactions = (data.transactions || defaultData.transactions).map((t: any) => ({
+    type: 'outgoing',
+    is_fee: false,
+    ...t
+  }));
+
   useAppStore.setState({
     sourceOfTruth: {
       ...defaultData,
@@ -49,8 +56,8 @@ const setupStoreWithData = (data: Partial<SourceOfTruthType> = {}) => {
       bank: { ...defaultData.bank, ...data.bank },
       client: { ...defaultData.client, ...data.client },
       statement: { ...defaultData.statement, ...data.statement },
-      balances: { ...defaultData.balances, ...data.balances },
-      transactions: data.transactions || defaultData.transactions,
+      balances: { ...defaultData.balances, total_fees: 0, ...data.balances },
+      transactions: processedTransactions,
       exportSettings: { ...defaultData.exportSettings, ...data.exportSettings },
     },
   });
@@ -305,6 +312,7 @@ describe('LeftPanel Integration Tests', () => {
           closing_balance: 1500,
           total_credit: 1500,
           total_debit: 1000,
+          total_fees: 0,
         },
         transactions: [
           {
@@ -314,6 +322,8 @@ describe('LeftPanel Integration Tests', () => {
             popis: 'Vklad',
             vs: '1234567890',
             ks: '0308',
+            type: 'incoming' as const,
+            is_fee: false,
           },
         ],
         exportSettings: {

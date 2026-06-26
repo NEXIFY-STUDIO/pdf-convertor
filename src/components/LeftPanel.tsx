@@ -16,6 +16,10 @@ async function downloadStatementPdf(sourceOfTruth: any): Promise<void> {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  // Clean up object URL to prevent memory leaks
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 export default function LeftPanel() {
@@ -27,8 +31,16 @@ export default function LeftPanel() {
     setOpeningBalance, 
     setTransactions,
     mistralApiKey,
-    setMistralApiKey
+    setMistralApiKey,
+    
+    // Batch Mode variables & actions
+    batchMode,
+    batchSettings,
+    setBatchMode,
+    setBatchSettings,
+    generateBatch
   } = useAppStore();
+
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -82,43 +94,48 @@ export default function LeftPanel() {
     }
   };
 
-const mapJsonTransactions = (rows: any[]): TransactionType[] => {
-  return rows.map((row: any) => {
-    const dateRealiz = row.transfer_confirmed_date || row.date_realiz || row.Date || row.date || '';
-    const dateValuta = row.transfer_currency_date || row.date_valuta || row.Date || row.date || dateRealiz || '';
-    
-    let amt = 0;
-    if (row.transfer_amount !== undefined) {
-      amt = parseFloat(row.transfer_amount);
-      if (row.transfer_type === 'outgoing') {
-        amt = -Math.abs(amt);
+  const mapJsonTransactions = (rows: any[]): TransactionType[] => {
+    return rows.map((row: any) => {
+      const dateRealiz = row.transfer_confirmed_date || row.date_realiz || row.Date || row.date || '';
+      const dateBooking = row.date_booking || dateRealiz;
+      const dateValuta = row.transfer_currency_date || row.date_valuta || row.Date || row.date || dateRealiz || '';
+      
+      let amt = 0;
+      if (row.transfer_amount !== undefined) {
+        amt = parseFloat(row.transfer_amount);
+        if (row.transfer_type === 'outgoing') {
+          amt = -Math.abs(amt);
+        } else {
+          amt = Math.abs(amt);
+        }
       } else {
-        amt = Math.abs(amt);
+        amt = parseFloat(row.Amount || row.amount || '0');
       }
-    } else {
-      amt = parseFloat(row.Amount || row.amount || '0');
-    }
-    
-    const popis = row.transfer_description || row.popis || row.Description || '';
-    const account = row.transfer_recipient_iban || row.account || '';
-    const vs = row.transfer_variable_symbol || row.vs || '';
-    const ks = row.transfer_constant_symbol || row.ks || '';
-    const ss = row.transfer_specific_symbol || row.ss || '';
-    const type = row.transfer_type || row.type || '';
+      
+      const popis = row.transfer_description || row.popis || row.Description || '';
+      const account = row.transfer_recipient_iban || row.account || '';
+      const vs = row.transfer_variable_symbol || row.vs || '';
+      const ks = row.transfer_constant_symbol || row.ks || '';
+      const ss = row.transfer_specific_symbol || row.ss || '';
+      
+      const isFee = row.is_fee === true || row.type === 'fee' || false;
+      const type = (row.type === 'fee' || isFee) ? 'fee' : (row.transfer_type || row.type || (amt >= 0 ? 'incoming' : 'outgoing')) as 'incoming' | 'outgoing' | 'fee';
 
-    return {
-      date_realiz: dateRealiz,
-      date_valuta: dateValuta,
-      amount: amt,
-      popis,
-      account,
-      vs,
-      ks,
-      ss,
-      type
-    };
-  });
-};
+      return {
+        date_realiz: dateRealiz,
+        date_booking: dateBooking,
+        date_valuta: dateValuta,
+        amount: amt,
+        popis,
+        account,
+        vs,
+        ks,
+        ss,
+        type,
+        is_fee: isFee
+      };
+    });
+  };
 
   const handleFileUpload = (event: any) => {
     const file = event.target.files?.[0];
@@ -160,79 +177,411 @@ const mapJsonTransactions = (rows: any[]): TransactionType[] => {
     }
   };
 
+  // Batch specific handlers
+  const updateRecurring = (idx: number, updatedItem: Partial<typeof batchSettings.recurringTransactions[0]>) => {
+    const updated = [...batchSettings.recurringTransactions];
+    updated[idx] = { ...updated[idx], ...updatedItem };
+    setBatchSettings({ recurringTransactions: updated });
+  };
+
+  const addRecurring = () => {
+    setBatchSettings({
+      recurringTransactions: [
+        ...batchSettings.recurringTransactions,
+        { description: 'Nová transakcia', amount: 100, day: 15 }
+      ]
+    });
+  };
+
+  const removeRecurring = (idx: number) => {
+    setBatchSettings({
+      recurringTransactions: batchSettings.recurringTransactions.filter((_, i) => i !== idx)
+    });
+  };
+
   return (
     <aside className="ft-left">
-
-      {/* ── AI Import (Mistral) ── */}
-      <div className="ft-section-label">AI Import (Mistral)</div>
-      <div className="ft-card">
-        <div className="ft-card-title" style={{ marginBottom: '0.625rem' }}>Automatický import cez LLM</div>
-        
-        <div className="ft-field" style={{ marginBottom: '0.625rem' }}>
-          <label className="ft-label" htmlFor="mistral-key">Mistral API Kľúč</label>
-          <input
-            id="mistral-key"
-            className="ft-input"
-            type="password"
-            value={mistralApiKey}
-            onChange={(e) => setMistralApiKey(e.target.value)}
-            placeholder="Zadajte API kľúč..."
-            style={{ fontFamily: 'var(--font-mono)' }}
-          />
-        </div>
-
-        <div className="ft-field" style={{ marginBottom: '0.625rem' }}>
-          <label className="ft-label" htmlFor="mistral-raw-text">Surový text výpisu</label>
-          <textarea
-            id="mistral-raw-text"
-            className="ft-input"
-            rows={4}
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            placeholder="Sem skopírujte text z internet bankingu alebo PDF výpisu..."
-            style={{ resize: 'vertical', minHeight: '60px', fontFamily: 'var(--font-sans)' }}
-          />
-        </div>
-
-        <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="mistral-model">Model</label>
-            <select
-              id="mistral-model"
-              className="ft-input"
-              value={aiModel}
-              onChange={(e) => setAiModel(e.target.value)}
-              style={{ padding: '0 0.5rem', height: '1.875rem' }}
-            >
-              <option value="mistral-large-latest">mistral-large-latest (Odporúčaný)</option>
-              <option value="open-mistral-nemo">open-mistral-nemo (Rýchly)</option>
-              <option value="mistral-small-latest">mistral-small-latest</option>
-            </select>
-          </div>
-        </div>
-
-        <button
-          className="ft-btn ft-btn-primary ft-btn-sm"
-          style={{ width: '100%', justifyContent: 'center', marginTop: '0.3125rem' }}
-          onClick={handleAiParse}
-          disabled={aiLoading || !rawText}
+      
+      {/* Mode Toggle Selector */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem' }}>
+        <button 
+          className={`ft-btn ${!batchMode ? 'ft-btn-primary' : 'ft-btn-ghost'}`} 
+          style={{ flex: 1, padding: '6px 12px', fontSize: '0.75rem', justifyContent: 'center' }}
+          onClick={() => setBatchMode(false)}
         >
-          {aiLoading ? <><span className="ft-spinner" /> Spracovávam...</> : 'Analyzovať cez AI'}
+          Jeden výpis
         </button>
-
-        {aiError && (
-          <div className="ft-error-msg" style={{ marginTop: '0.5rem', color: 'var(--color-error)' }}>
-            {aiError}
-          </div>
-        )}
-        {aiSuccess && (
-          <div style={{ marginTop: '0.5rem', color: 'var(--color-success)', fontSize: '0.75rem', fontWeight: 'bold' }}>
-            ✓ Výpis bol úspešne naimportovaný!
-          </div>
-        )}
+        <button 
+          className={`ft-btn ${batchMode ? 'ft-btn-primary' : 'ft-btn-ghost'}`} 
+          style={{ flex: 1, padding: '6px 12px', fontSize: '0.75rem', justifyContent: 'center' }}
+          onClick={() => setBatchMode(true)}
+        >
+          Dávkový generátor
+        </button>
       </div>
 
-      {/* ── Bank Data ── */}
+      {!batchMode ? (
+        <>
+          {/* ── AI Import (Mistral) ── */}
+          <div className="ft-section-label">AI Import (Mistral)</div>
+          <div className="ft-card">
+            <div className="ft-card-title" style={{ marginBottom: '0.625rem' }}>Automatický import cez LLM</div>
+            
+            <div className="ft-field" style={{ marginBottom: '0.625rem' }}>
+              <label className="ft-label" htmlFor="mistral-key">Mistral API Kľúč</label>
+              <input
+                id="mistral-key"
+                className="ft-input"
+                type="password"
+                value={mistralApiKey}
+                onChange={(e) => setMistralApiKey(e.target.value)}
+                placeholder="Zadajte API kľúč..."
+                style={{ fontFamily: 'var(--font-mono)' }}
+              />
+            </div>
+
+            <div className="ft-field" style={{ marginBottom: '0.625rem' }}>
+              <label className="ft-label" htmlFor="mistral-raw-text">Surový text výpisu</label>
+              <textarea
+                id="mistral-raw-text"
+                className="ft-input"
+                rows={4}
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder="Sem skopírujte text z internet bankingu alebo PDF výpisu..."
+                style={{ resize: 'vertical', minHeight: '60px', fontFamily: 'var(--font-sans)' }}
+              />
+            </div>
+
+            <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="mistral-model">Model</label>
+                <select
+                  id="mistral-model"
+                  className="ft-input"
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                  style={{ padding: '0 0.5rem', height: '1.875rem' }}
+                >
+                  <option value="mistral-large-latest">mistral-large-latest (Odporúčaný)</option>
+                  <option value="open-mistral-nemo">open-mistral-nemo (Rýchly)</option>
+                  <option value="mistral-small-latest">mistral-small-latest</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              className="ft-btn ft-btn-primary ft-btn-sm"
+              style={{ width: '100%', justifyContent: 'center', marginTop: '0.3125rem' }}
+              onClick={handleAiParse}
+              disabled={aiLoading || !rawText}
+            >
+              {aiLoading ? <><span className="ft-spinner" /> Spracovávam...</> : 'Analyzovať cez AI'}
+            </button>
+
+            {aiError && (
+              <div className="ft-error-msg" style={{ marginTop: '0.5rem', color: 'var(--color-error)' }}>
+                {aiError}
+              </div>
+            )}
+            {aiSuccess && (
+              <div style={{ marginTop: '0.5rem', color: 'var(--color-success)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                ✓ Výpis bol úspešne naimportovaný!
+              </div>
+            )}
+          </div>
+
+          {/* ── Statement Params ── */}
+          <div className="ft-section-label">Výpis</div>
+          <div className="ft-card">
+            <div className="ft-card-title">Parametre výpisu</div>
+            <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="statement-title">Názov dokumentu</label>
+                <input
+                  id="statement-title"
+                  className="ft-input"
+                  value={statement.statement_title || ''}
+                  onChange={(e) => setStatementData({ statement_title: e.target.value })}
+                  placeholder="VÝPIS Z ÚČTU"
+                />
+              </div>
+              <div className="ft-field" style={{ flex: '0 0 110px' }}>
+                <label className="ft-label" htmlFor="statement-number">Číslo výpisu</label>
+                <input
+                  id="statement-number"
+                  className="ft-input"
+                  value={statement.statement_number}
+                  onChange={(e) => setStatementData({ statement_number: e.target.value })}
+                  placeholder="11/2025"
+                />
+              </div>
+            </div>
+            <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="period-start">Obdobie Od</label>
+                <input
+                  id="period-start"
+                  className="ft-input"
+                  value={statement.period_start}
+                  onChange={(e) => setStatementData({ period_start: e.target.value })}
+                  placeholder="01.11.2025"
+                />
+              </div>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="period-end">Obdobie Do</label>
+                <input
+                  id="period-end"
+                  className="ft-input"
+                  value={statement.period_end}
+                  onChange={(e) => setStatementData({ period_end: e.target.value })}
+                  placeholder="30.11.2025"
+                />
+              </div>
+            </div>
+            <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="statement-date">Zo dňa</label>
+                <input
+                  id="statement-date"
+                  className="ft-input"
+                  value={statement.statement_date || ''}
+                  onChange={(e) => setStatementData({ statement_date: e.target.value })}
+                  placeholder="30.11.2025"
+                />
+              </div>
+              <div className="ft-field" style={{ flex: '0 0 80px' }}>
+                <label className="ft-label" htmlFor="statement-currency">Mena</label>
+                <input
+                  id="statement-currency"
+                  className="ft-input"
+                  value={statement.statement_currency || ''}
+                  onChange={(e) => setStatementData({ statement_currency: e.target.value })}
+                  placeholder="EUR"
+                />
+              </div>
+            </div>
+            <div className="ft-input-grid">
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="statement-frequency">Frekvencia výpisov</label>
+                <input
+                  id="statement-frequency"
+                  className="ft-input"
+                  value={statement.statement_frequency || ''}
+                  onChange={(e) => setStatementData({ statement_frequency: e.target.value })}
+                  placeholder="mesačne"
+                />
+              </div>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="opening-balance">Počiatočný zostatok (€)</label>
+                <input
+                  id="opening-balance"
+                  className="ft-input"
+                  type="number"
+                  value={balances.opening_balance}
+                  onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Transactions ── */}
+          <div className="ft-section-label">Transakcie</div>
+          <div className="ft-card">
+            <div className="ft-tx-header">
+              <div className="ft-tx-title">
+                Transakcie
+                <span className="ft-tx-count">{transactions.length}</span>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  accept=".csv,.json"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+                <button
+                  className="ft-btn ft-btn-ghost ft-btn-sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Importovať dáta (CSV / JSON)
+                </button>
+              </div>
+            </div>
+
+            <div className="ft-tx-list">
+              {transactions.length === 0 ? (
+                <div className="ft-tx-empty">
+                  Zatiaľ žiadne transakcie.<br />Nahrajte CSV alebo JSON súbor.
+                </div>
+              ) : (
+                transactions.map((t: TransactionType, idx: number) => (
+                  <div key={idx} className="ft-tx-row">
+                    <span className="ft-tx-date">{t.date_realiz}</span>
+                    <span className="ft-tx-desc">{t.popis}</span>
+                    <span className={`ft-tx-amount ${t.amount >= 0 ? 'credit' : 'debit'}`}>
+                      {t.amount >= 0 ? '+' : ''}{t.amount.toFixed(2)} €
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* ── Calculations ── */}
+          <div className="ft-section-label">Zostatky</div>
+          <div className="ft-card">
+            <div className="ft-card-title">Automatické výpočty</div>
+
+            <div className="ft-money-grid">
+              <div className="ft-money-item">
+                <div className="ft-money-label">Celkový kredit</div>
+                <div className="ft-money-value credit">+{balances.total_credit.toFixed(2)} €</div>
+              </div>
+              <div className="ft-money-item">
+                <div className="ft-money-label">Celkový debet</div>
+                <div className="ft-money-value debit">−{balances.total_debit.toFixed(2)} €</div>
+              </div>
+            </div>
+
+            <div className="ft-money-closing">
+              <div className="ft-money-closing-label">Konečný zostatok</div>
+              <div className="ft-money-closing-value">{balances.closing_balance.toFixed(2)} €</div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* ── Batch Generator configuration card ── */}
+          <div className="ft-section-label">Batch Nastavenia</div>
+          <div className="ft-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="ft-card-title">Parametre časovej osi</div>
+            
+            <div className="ft-input-grid">
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="batch-start-month">Počiatočný mesiac</label>
+                <select
+                  id="batch-start-month"
+                  className="ft-input"
+                  value={batchSettings.startMonth}
+                  onChange={(e) => setBatchSettings({ startMonth: e.target.value })}
+                  style={{ padding: '0 0.5rem', height: '1.875rem' }}
+                >
+                  {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="batch-start-year">Počiatočný rok</label>
+                <input
+                  id="batch-start-year"
+                  className="ft-input"
+                  type="number"
+                  value={batchSettings.startYear}
+                  onChange={(e) => setBatchSettings({ startYear: e.target.value })}
+                  placeholder="2025"
+                />
+              </div>
+            </div>
+
+            <div className="ft-input-grid">
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="batch-count">Počet mesiacov</label>
+                <input
+                  id="batch-count"
+                  className="ft-input"
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={batchSettings.numberOfMonths}
+                  onChange={(e) => setBatchSettings({ numberOfMonths: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+              <div className="ft-field">
+                <label className="ft-label" htmlFor="batch-initial-balance">Počiat. zostatok (€)</label>
+                <input
+                  id="batch-initial-balance"
+                  className="ft-input"
+                  type="number"
+                  value={batchSettings.initialOpeningBalance}
+                  onChange={(e) => setBatchSettings({ initialOpeningBalance: parseFloat(e.target.value) || 0 })}
+                  placeholder="1000.00"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                />
+              </div>
+            </div>
+
+            {/* Recurring transactions builder */}
+            <div style={{ marginTop: '0.5rem' }}>
+              <div className="ft-label" style={{ marginBottom: '0.4rem', textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 600 }}>
+                Opakujúce sa transakcie
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px', marginBottom: '0.5rem' }}>
+                {batchSettings.recurringTransactions.map((rec, idx) => (
+                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 50px auto', gap: '6px', alignItems: 'center' }}>
+                    <input
+                      className="ft-input"
+                      style={{ padding: '4px 6px', fontSize: '0.75rem', height: '1.875rem' }}
+                      value={rec.description}
+                      onChange={(e) => updateRecurring(idx, { description: e.target.value })}
+                      placeholder="Popis"
+                    />
+                    <input
+                      className="ft-input"
+                      style={{ padding: '4px 6px', fontSize: '0.75rem', height: '1.875rem', fontFamily: 'var(--font-mono)' }}
+                      type="number"
+                      value={rec.amount}
+                      onChange={(e) => updateRecurring(idx, { amount: parseFloat(e.target.value) || 0 })}
+                      placeholder="Suma"
+                    />
+                    <input
+                      className="ft-input"
+                      style={{ padding: '4px 6px', fontSize: '0.75rem', height: '1.875rem', fontFamily: 'var(--font-mono)' }}
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={rec.day}
+                      onChange={(e) => updateRecurring(idx, { day: parseInt(e.target.value) || 1 })}
+                      placeholder="Deň"
+                    />
+                    <button
+                      className="ft-btn ft-btn-ghost"
+                      style={{ padding: '0', width: '1.875rem', height: '1.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}
+                      onClick={() => removeRecurring(idx)}
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="ft-btn ft-btn-ghost ft-btn-sm"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={addRecurring}
+                type="button"
+              >
+                + Pridať transakciu
+              </button>
+            </div>
+
+            <button
+              className="ft-btn ft-btn-primary"
+              style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
+              onClick={generateBatch}
+              type="button"
+            >
+              Generovať dávku
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ── Bank Data (Common) ── */}
       <div className="ft-section-label">Banka</div>
       <div className="ft-card">
         <div className="ft-card-title">Údaje banky</div>
@@ -282,7 +631,7 @@ const mapJsonTransactions = (rows: any[]): TransactionType[] => {
         </div>
       </div>
 
-      {/* ── Client Data ── */}
+      {/* ── Client Data (Common) ── */}
       <div className="ft-section-label">Klient</div>
       <div className="ft-card">
         <div className="ft-card-title">Údaje klienta</div>
@@ -386,174 +735,16 @@ const mapJsonTransactions = (rows: any[]): TransactionType[] => {
         </div>
       </div>
 
-      {/* ── Statement Params ── */}
-      <div className="ft-section-label">Výpis</div>
-      <div className="ft-card">
-        <div className="ft-card-title">Parametre výpisu</div>
-        <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="statement-title">Názov dokumentu</label>
-            <input
-              id="statement-title"
-              className="ft-input"
-              value={statement.statement_title || ''}
-              onChange={(e) => setStatementData({ statement_title: e.target.value })}
-              placeholder="VÝPIS Z ÚČTU"
-            />
-          </div>
-          <div className="ft-field" style={{ flex: '0 0 110px' }}>
-            <label className="ft-label" htmlFor="statement-number">Číslo výpisu</label>
-            <input
-              id="statement-number"
-              className="ft-input"
-              value={statement.statement_number}
-              onChange={(e) => setStatementData({ statement_number: e.target.value })}
-              placeholder="11/2025"
-            />
-          </div>
-        </div>
-        <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="period-start">Obdobie Od</label>
-            <input
-              id="period-start"
-              className="ft-input"
-              value={statement.period_start}
-              onChange={(e) => setStatementData({ period_start: e.target.value })}
-              placeholder="01.11.2025"
-            />
-          </div>
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="period-end">Obdobie Do</label>
-            <input
-              id="period-end"
-              className="ft-input"
-              value={statement.period_end}
-              onChange={(e) => setStatementData({ period_end: e.target.value })}
-              placeholder="30.11.2025"
-            />
-          </div>
-        </div>
-        <div className="ft-input-grid" style={{ marginBottom: '0.625rem' }}>
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="statement-date">Zo dňa</label>
-            <input
-              id="statement-date"
-              className="ft-input"
-              value={statement.statement_date || ''}
-              onChange={(e) => setStatementData({ statement_date: e.target.value })}
-              placeholder="30.11.2025"
-            />
-          </div>
-          <div className="ft-field" style={{ flex: '0 0 80px' }}>
-            <label className="ft-label" htmlFor="statement-currency">Mena</label>
-            <input
-              id="statement-currency"
-              className="ft-input"
-              value={statement.statement_currency || ''}
-              onChange={(e) => setStatementData({ statement_currency: e.target.value })}
-              placeholder="EUR"
-            />
-          </div>
-        </div>
-        <div className="ft-input-grid">
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="statement-frequency">Frekvencia výpisov</label>
-            <input
-              id="statement-frequency"
-              className="ft-input"
-              value={statement.statement_frequency || ''}
-              onChange={(e) => setStatementData({ statement_frequency: e.target.value })}
-              placeholder="mesačne"
-            />
-          </div>
-          <div className="ft-field">
-            <label className="ft-label" htmlFor="opening-balance">Počiatočný zostatok (€)</label>
-            <input
-              id="opening-balance"
-              className="ft-input"
-              type="number"
-              value={balances.opening_balance}
-              onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)}
-              placeholder="0.00"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Transactions ── */}
-      <div className="ft-section-label">Transakcie</div>
-      <div className="ft-card">
-        <div className="ft-tx-header">
-          <div className="ft-tx-title">
-            Transakcie
-            <span className="ft-tx-count">{transactions.length}</span>
-          </div>
-          <div>
-            <input
-              type="file"
-              accept=".csv,.json"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              onChange={handleFileUpload}
-            />
-            <button
-              className="ft-btn ft-btn-ghost ft-btn-sm"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Importovať dáta (CSV / JSON)
-            </button>
-          </div>
-        </div>
-
-        <div className="ft-tx-list">
-          {transactions.length === 0 ? (
-            <div className="ft-tx-empty">
-              Zatiaľ žiadne transakcie.<br />Nahrajte CSV alebo JSON súbor.
-            </div>
-          ) : (
-            transactions.map((t: TransactionType, idx: number) => (
-              <div key={idx} className="ft-tx-row">
-                <span className="ft-tx-date">{t.date_realiz}</span>
-                <span className="ft-tx-desc">{t.popis}</span>
-                <span className={`ft-tx-amount ${t.amount >= 0 ? 'credit' : 'debit'}`}>
-                  {t.amount >= 0 ? '+' : ''}{t.amount.toFixed(2)} €
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* ── Calculations ── */}
-      <div className="ft-section-label">Zostatky</div>
-      <div className="ft-card">
-        <div className="ft-card-title">Automatické výpočty</div>
-
-        <div className="ft-money-grid">
-          <div className="ft-money-item">
-            <div className="ft-money-label">Celkový kredit</div>
-            <div className="ft-money-value credit">+{balances.total_credit.toFixed(2)} €</div>
-          </div>
-          <div className="ft-money-item">
-            <div className="ft-money-label">Celkový debet</div>
-            <div className="ft-money-value debit">−{balances.total_debit.toFixed(2)} €</div>
-          </div>
-        </div>
-
-        <div className="ft-money-closing">
-          <div className="ft-money-closing-label">Konečný zostatok</div>
-          <div className="ft-money-closing-value">{balances.closing_balance.toFixed(2)} €</div>
-        </div>
-      </div>
-
       {/* ── Export ── */}
       <div className="ft-export-card">
         <div className="ft-export-row">
           <div className="ft-export-info">
-            <div className="ft-export-title">Stiahnuť PDF</div>
-            <div className="ft-export-meta">Plne offline · dáta zostávajú v zariadení</div>
+            <div className="ft-export-title">
+              {batchMode ? 'Stiahnuť mesiac' : 'Stiahnuť PDF'}
+            </div>
+            <div className="ft-export-meta">
+              {batchMode ? 'Offline PDF aktuálne vybraného mesiaca' : 'Plne offline · dáta zostávajú v zariadení'}
+            </div>
           </div>
           <button
             id="download-pdf-btn"
