@@ -9,19 +9,21 @@ import {
 // ============================================
 // 1. FONT REGISTRATION (DejaVu Sans for Slovak diacritics)
 // ============================================
+const assetBase = import.meta.env.BASE_URL;
+
 Font.register({
   family: 'DejaVu Sans',
   fonts: [
-    { src: '/fonts/DejaVuSans.ttf', fontWeight: 400 },
-    { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 700 },
+    { src: `${assetBase}fonts/DejaVuSans.ttf`, fontWeight: 400 },
+    { src: `${assetBase}fonts/DejaVuSans-Bold.ttf`, fontWeight: 700 },
   ],
 });
 
 Font.register({
   family: 'DejaVu Sans Mono',
   fonts: [
-    { src: '/fonts/DejaVuSansMono.ttf', fontWeight: 400 },
-    { src: '/fonts/DejaVuSansMono-Bold.ttf', fontWeight: 700 },
+    { src: `${assetBase}fonts/DejaVuSansMono.ttf`, fontWeight: 400 },
+    { src: `${assetBase}fonts/DejaVuSansMono-Bold.ttf`, fontWeight: 700 },
   ],
 });
 

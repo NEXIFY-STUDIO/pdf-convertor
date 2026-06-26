@@ -42,7 +42,7 @@ interface AppState {
 const initialSourceOfTruth: SourceOfTruthType = {
   bank: {
     bank_logo_id: 'VÚB BANKA Intesa Sanpaolo Group',
-    bank_logo_image: '/vuub.png',
+    bank_logo_image: `${import.meta.env.BASE_URL}vuub.png`,
     bank_register_info: 'VÚB, a.s., Mlynské nivy 1, 829 90 Bratislava 25, Obch. reg.: Mestský súd Bratislava III, Oddiel: Sa, Vložka č. 341/B, IČO: 31320155, www.vub.sk',
     bank_outlet_id: '30017',
     bank_outlet_address: 'KOMÁRNICKÁ 11, BRATISLAVA',

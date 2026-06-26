@@ -4,7 +4,10 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
+const base = '/vub/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -17,6 +20,8 @@ export default defineConfig({
         theme_color: '#1a1a2e',
         background_color: '#16213e',
         display: 'standalone',
+        start_url: base,
+        scope: base,
         icons: [
           {
             src: 'pwa-192x192.svg',
