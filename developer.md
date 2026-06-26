@@ -115,10 +115,10 @@ HTML maketa je štylizovaná pomocou tried v [fintech.css](file:///Users/erikbab
 .ft-html-sheet {
   width: 210mm;
   min-height: 297mm;
-  padding: 20mm;
+  padding: 15mm;
   background: #ffffff;
-  color: #1a1a1a;
-  font-family: 'Cousine', monospace;
+  color: #000000;
+  font-family: 'DejaVu Sans', sans-serif;
   position: relative;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
@@ -165,19 +165,26 @@ Keďže výstupy z rôznych bánk môžu mať mierne odlišné pomenovania stĺp
 
 Komponent `<StatementDocument>` v `RightPanel.tsx` kompiluje PDF dokument.
 
-### A. Podpora slovenských znakov (Latin Extended)
-Štandardné fonty zabudované v PDF prehliadačoch (Helvetica, Times) nepodporujú slovenské diakritické znamienka (ako napr. ľ, š, č, ť, ž, ô, ä). Ich použitie vedie k chybám vykresľovania alebo zobrazeniu prázdnych štvorčekov ("tofu").
-*   Aplikácia pri štarte registruje neproporcionálne písmo **Cousine** stiahnuté priamo z Google Fonts API:
+### A. Podpora slovenských znakov (Latin Extended) a diakritiky
+Štandardné fonty zabudované v PDF prehliadačoch (Helvetica, Times) nepodporujú plne slovenské diakritické znamienka (ako napr. ľ, š, č, ť, ž, ô, ä). Na vyriešenie chýbajúcich znakov a "štvorčekov" pri generovaní, aplikácia využíva lokálne naítavané open-source fonty **DejaVu Sans** a **DejaVu Sans Mono**.
+*   Aplikácia pri štarte dynamicky registruje tieto písma zo statického adresára `/fonts/`:
     ```typescript
     Font.register({
-      family: 'Cousine',
+      family: 'DejaVu Sans',
       fonts: [
-        { src: 'https://fonts.gstatic.com/s/cousine/v30/d6lIkaiiRdih4SpP_SQvyQ.ttf', fontWeight: 400 },
-        { src: 'https://fonts.gstatic.com/s/cousine/v30/d6lNkaiiRdih4SpP9Z8K2TnM1w.ttf', fontWeight: 700 }
+        { src: '/fonts/DejaVuSans.ttf', fontWeight: 400 },
+        { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 700 }
+      ]
+    });
+    Font.register({
+      family: 'DejaVu Sans Mono',
+      fonts: [
+        { src: '/fonts/DejaVuSansMono.ttf', fontWeight: 400 },
+        { src: '/fonts/DejaVuSansMono-Bold.ttf', fontWeight: 700 }
       ]
     });
     ```
-*   Celý PDF dokument má explicitne nastavený štýl `fontFamily: 'Cousine'`.
+*   Týmto prístupom sa plne eliminujú problémy so sťahovaním či subsetovaním Google fontov. Pre layout je nastavený jemný padding `15mm` a veľkosť písma `7` až `8`, aby výsledný generát zabezpečil konzistentné a presné zobrazenie na **4 stranách** podľa vzoru originálu banky.
 
 ### B. Vizuálne replikačné prvky
 Pre zaistenie 100% zhodnosti s originálnym dokumentom VÚB banky sú implementované tieto špecifické dizajnové detaily:
@@ -237,6 +244,8 @@ Pred začatím generovania ZIP archívu aplikácia zanalyzuje limity prehliadač
 ## 8. Testovacia infraštruktúra (Zero Regressions)
 
 Aplikácia dosahuje stabilný chod bez regresií vďaka rozsiahlej sade unit a integračných testov.
+
+Aplikácia vynucuje nulovú regresiu kódu pomocou **103 prísnych automatizovaných testov** spúšťaných v prostredí Vitest:
 
 ### A. Snapshot Testy PDF Štruktúry (`StatementDocument.test.tsx`)
 Keďže generovaný súbor je binárny PDF, klasické HTML porovnávanie nefunguje. Používame `react-test-renderer` na transformáciu `@react-pdf` komponentov na JSON štruktúru:

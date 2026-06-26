@@ -142,7 +142,7 @@ Aplikácia je postavená na čistom rozdelení logiky (State / Schémy) a prezen
 
 ## 🧪 Testovacia stratégia a kvalita kódu
 
-Aplikácia vynucuje nulovú regresiu kódu pomocou **94 prísnych automatizovaných testov** spúšťaných v prostredí Vitest:
+Aplikácia vynucuje nulovú regresiu kódu pomocou **103 prísnych automatizovaných testov** spúšťaných v prostredí Vitest:
 
 1.  **Zod Validácia (`sourceOfTruth.test.ts`):** Zaručuje správnosť všetkých polí, kontroluje minimálne dĺžky textov (napríklad validita IBAN, SWIFT), povinné polia a správanie pri neúplných dátach.
 2.  **Zustand Store Testy (`useAppStore.test.ts`):** Testujú správnosť matematických výpočtov pri vkladaní príjmov/výdavkov, prepočet celkových zostatkov a spracovanie importovaných súborov.
