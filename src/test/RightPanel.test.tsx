@@ -1,9 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, screen, act } from '@testing-library/react';
+import { render, fireEvent, screen, act, within, waitFor } from '@testing-library/react';
 import RightPanel from '../components/RightPanel';
 import { useAppStore } from '../store/useAppStore';
 
-// Mock react-pdf to avoid JSDOM compatibility issues
+const mockDownloadZip = vi.fn().mockResolvedValue(undefined);
+const mockCheckMemory = vi.fn().mockReturnValue(true);
+
+vi.mock('../export/zipExport', () => ({
+  checkMemoryBeforeExport: (...args: unknown[]) => mockCheckMemory(...args),
+  downloadStatementsZip: (...args: unknown[]) => mockDownloadZip(...args),
+}));
+
 vi.mock('@react-pdf/renderer', () => {
   return {
     PDFViewer: ({ children }: any) => <div data-testid="pdf-viewer">{children}</div>,
@@ -11,68 +18,43 @@ vi.mock('@react-pdf/renderer', () => {
     Page: ({ children }: any) => <div data-testid="pdf-page">{children}</div>,
     Text: ({ children }: any) => <span data-testid="pdf-text">{children}</span>,
     View: ({ children }: any) => <div data-testid="pdf-view">{children}</div>,
-    StyleSheet: {
-      create: (styles: any) => styles,
-    },
-    Font: {
-      register: vi.fn(),
-    },
+    StyleSheet: { create: (styles: any) => styles },
+    Font: { register: vi.fn() },
     Image: ({ src }: any) => <img data-testid="pdf-image" src={src} />,
   };
 });
 
-describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
+describe('RightPanel PDF Preview & Inspector', () => {
   it('should default to PDF preview mode', () => {
     render(<RightPanel />);
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
-    expect(screen.queryByText('Interactive Editor (Magic Mirror)')).not.toBeInTheDocument();
+    expect(screen.getByText('Live PDF Preview')).toBeInTheDocument();
   });
 
-  it('should toggle to HTML Editor view when clicking Editor button', () => {
+  it('should open Inspector panel when clicking Inspector button', () => {
     render(<RightPanel />);
-    
-    // Toggle button to Editor
-    const editorBtn = screen.getByRole('button', { name: /Editor \(HTML\)/i });
-    fireEvent.click(editorBtn);
 
-    // Should render editor label and HTML statement container
-    expect(screen.getByText('Interactive Editor (Magic Mirror)')).toBeInTheDocument();
-    expect(screen.queryByTestId('pdf-viewer')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Inspector/i }));
+
+    expect(screen.getByRole('button', { name: /Počiatočný zostatok/i })).toBeInTheDocument();
+    expect(screen.getByText(/Transakcie \(\d+\)/)).toBeInTheDocument();
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 
-  it('should open generic field edit modal and update Zustand store state', () => {
+  it('should edit field via Inspector and update Zustand store', () => {
     render(<RightPanel />);
-    
-    // Switch to Editor
-    const editorBtn = screen.getByRole('button', { name: /Editor \(HTML\)/i });
-    fireEvent.click(editorBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Inspector/i }));
 
-    // Check basic presence of the logo/title block
-    const addressBlock = screen.getByText('KOMÁRNICKÁ 11, BRATISLAVA');
-    fireEvent.click(addressBlock);
+    fireEvent.click(screen.getByText('Adresa pobočky'));
 
-    // Verify modal appears
-    expect(screen.getByText('Upraviť hodnotu')).toBeInTheDocument();
-    expect(screen.getByLabelText('Adresa pobočky')).toBeInTheDocument();
-
-    // Type new address
     const input = screen.getByLabelText('Adresa pobočky');
     fireEvent.change(input, { target: { value: 'NOVÁ ADRESA 12, KOŠICE' } });
+    fireEvent.click(screen.getByRole('button', { name: /Uložiť/i }));
 
-    // Save
-    const saveBtn = screen.getByRole('button', { name: /Uložiť/i });
-    fireEvent.click(saveBtn);
-
-    // Modal should close
-    expect(screen.queryByText('Upraviť hodnotu')).not.toBeInTheDocument();
-
-    // Zustand store should be updated and UI should re-render
-    expect(screen.getByText('NOVÁ ADRESA 12, KOŠICE')).toBeInTheDocument();
     expect(useAppStore.getState().sourceOfTruth.bank.bank_outlet_address).toBe('NOVÁ ADRESA 12, KOŠICE');
   });
 
-  it('should open transaction modal, save edit, and recalculate balances', () => {
-    // Inject a test transaction and opening balance
+  it('should edit transaction via Inspector and recalculate balances', () => {
     useAppStore.getState().setOpeningBalance(100);
     useAppStore.getState().setTransactions([
       {
@@ -82,41 +64,27 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
         popis: 'Výplata',
         type: 'incoming',
         is_fee: false,
-      }
+      },
     ]);
 
     render(<RightPanel />);
-    
-    // Switch to Editor
-    const editorBtn = screen.getByRole('button', { name: /Editor \(HTML\)/i });
-    fireEvent.click(editorBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Inspector/i }));
 
-    // Balances check with exact formatted text to avoid matching simple table strings
-    expect(screen.getByText('100.00 EUR')).toBeInTheDocument(); // opening balance
-    expect(screen.getByText(/200\.00 EUR/)).toBeInTheDocument(); // total credit
-    expect(screen.getAllByText('300.00 EUR')[0]).toBeInTheDocument(); // closing balance / disponibilny zostatok
+    expect(screen.getByText('200.00 EUR')).toBeInTheDocument();
+    expect(screen.getByText('300.00 EUR')).toBeInTheDocument();
 
-    // Find transaction row and click it
-    const txRow = screen.getByText('Výplata');
-    fireEvent.click(txRow);
+    const txList = document.querySelector('.ft-inspector-tx-list')!;
+    fireEvent.click(within(txList as HTMLElement).getByText('Výplata'));
 
-    // Modal appears
-    expect(screen.getByText('Upraviť transakciu #1')).toBeInTheDocument();
-
-    // Change amount to 500
     const amountInput = screen.getByLabelText('Suma');
     fireEvent.change(amountInput, { target: { value: '500' } });
+    fireEvent.click(screen.getByRole('button', { name: /Uložiť/i }));
 
-    // Save
-    const saveBtn = screen.getByRole('button', { name: /Uložiť/i });
-    fireEvent.click(saveBtn);
-
-    // Recalculated balance should be displayed (100 + 500 = 600)
-    expect(screen.getByText(/500\.00 EUR/)).toBeInTheDocument();
-    expect(screen.getAllByText('600.00 EUR')[0]).toBeInTheDocument();
+    expect(screen.getByText('500.00 EUR')).toBeInTheDocument();
+    expect(screen.getByText('600.00 EUR')).toBeInTheDocument();
   });
 
-  it('should delete transaction and update balances', () => {
+  it('should delete transaction via Inspector and update balances', () => {
     useAppStore.getState().setOpeningBalance(1000);
     useAppStore.getState().setTransactions([
       {
@@ -126,88 +94,148 @@ describe('RightPanel Interactive Mode & WYSIWYG Editor', () => {
         popis: 'Nákup potravín',
         type: 'outgoing',
         is_fee: false,
-      }
+      },
     ]);
 
     render(<RightPanel />);
-    
-    // Switch to Editor
-    const editorBtn = screen.getByRole('button', { name: /Editor \(HTML\)/i });
-    fireEvent.click(editorBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Inspector/i }));
 
-    expect(screen.getByText('Nákup potravín')).toBeInTheDocument();
-    expect(screen.getAllByText('800.00 EUR')[0]).toBeInTheDocument(); // closing balance 1000 - 200
+    const txList = document.querySelector('.ft-inspector-tx-list')!;
+    fireEvent.click(within(txList as HTMLElement).getByText('Nákup potravín'));
+    fireEvent.click(screen.getByRole('button', { name: /Zmazať/i }));
 
-    // Click transaction row
-    fireEvent.click(screen.getByText('Nákup potravín'));
-
-    // Click delete button
-    const deleteBtn = screen.getByRole('button', { name: /Zmazať/i });
-    fireEvent.click(deleteBtn);
-
-    // Transaction should be gone, balance should be 1 000.00 EUR (formatted with thousands separator space)
     expect(screen.queryByText('Nákup potravín')).not.toBeInTheDocument();
-    expect(screen.getAllByText('1 000.00 EUR').length).toBe(3); // opening, closing, and available balances are 1000
+    expect(screen.getAllByText('1 000.00 EUR').length).toBeGreaterThanOrEqual(2);
   });
 
   it('should have unique key on PDFViewer to prevent WASM Config collision', () => {
-    // Setup initial state
-    useAppStore.getState().setStatementData({
-      statement_month: '11',
-      statement_year: '2025'
-    });
-    
+    useAppStore.getState().setStatementData({ statement_month: '11', statement_year: '2025' });
     render(<RightPanel />);
-    
-    // PDFViewer should render without error (key prevents WASM collision)
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 
+  it('should not call ZIP export when batch is empty', async () => {
+    mockDownloadZip.mockClear();
+    useAppStore.setState({ batchMode: true, batchStatements: [] });
+    render(<RightPanel />);
+    expect(screen.queryByText(/Exportovať všetky do ZIP/)).not.toBeInTheDocument();
+    expect(mockDownloadZip).not.toHaveBeenCalled();
+  });
+
   it('should display ZIP export button in batch mode', () => {
-    // Enable batch mode with statements
     useAppStore.getState().setBatchMode(true);
     useAppStore.getState().generateBatch();
-    
+
     render(<RightPanel />);
-    
-    // Should show batch navigation and export button
+
     expect(screen.getByText(/Vygenerované výpisy/)).toBeInTheDocument();
     expect(screen.getByText(/Exportovať všetky do ZIP/)).toBeInTheDocument();
   });
 
+  it('should toggle Inspector panel closed', () => {
+    render(<RightPanel />);
+    fireEvent.click(screen.getByRole('button', { name: /^Inspector$/i }));
+    expect(screen.getByRole('button', { name: /Skryť Inspector/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Skryť Inspector/i }));
+    expect(screen.queryByText(/Transakcie \(\d+\)/)).not.toBeInTheDocument();
+  });
+
+  it('should apply ft-preview-split class when Inspector open', () => {
+    const { container } = render(<RightPanel />);
+    fireEvent.click(screen.getByRole('button', { name: /Inspector/i }));
+    expect(container.querySelector('.ft-preview-split')).toBeInTheDocument();
+  });
+
+  it('should switch batch statement via timeline chip', () => {
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+    render(<RightPanel />);
+    const chips = screen.getAllByRole('button').filter((b) => b.className.includes('ft-batch-chip'));
+    expect(chips.length).toBeGreaterThan(1);
+    fireEvent.click(chips[1]);
+    expect(useAppStore.getState().selectedBatchIndex).toBe(1);
+  });
+
+  it('should trigger ZIP export when memory check passes', async () => {
+    mockCheckMemory.mockReturnValue(true);
+    mockDownloadZip.mockClear();
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+
+    render(<RightPanel />);
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    });
+
+    await waitFor(() => {
+      expect(mockCheckMemory).toHaveBeenCalled();
+      expect(mockDownloadZip).toHaveBeenCalled();
+    });
+  });
+
+  it('should show alert when ZIP export throws', async () => {
+    const alert = vi.fn();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('alert', alert);
+    mockCheckMemory.mockReturnValue(true);
+    mockDownloadZip.mockRejectedValueOnce(new Error('ZIP fail'));
+
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+
+    render(<RightPanel />);
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    });
+
+    await waitFor(() => {
+      expect(alert).toHaveBeenCalledWith(
+        expect.stringContaining('Chyba pri generovaní ZIP archívu'),
+      );
+    });
+    consoleSpy.mockRestore();
+  });
+
+  it('should skip ZIP export when memory check fails', async () => {
+    mockCheckMemory.mockReturnValue(false);
+    mockDownloadZip.mockClear();
+    useAppStore.getState().setBatchMode(true);
+    useAppStore.getState().generateBatch();
+
+    render(<RightPanel />);
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Exportovať všetky do ZIP/));
+    });
+
+    await waitFor(() => {
+      expect(mockCheckMemory).toHaveBeenCalled();
+    });
+    expect(mockDownloadZip).not.toHaveBeenCalled();
+  });
+
   it('should handle PDFViewer key change when statement data changes', () => {
-    // Reset store to ensure clean state
     useAppStore.setState({
       sourceOfTruth: {
         ...useAppStore.getState().sourceOfTruth,
         statement: {
           ...useAppStore.getState().sourceOfTruth.statement,
           statement_month: '11',
-          statement_year: '2025'
-        }
-      }
+          statement_year: '2025',
+        },
+      },
     });
-    
+
     const { rerender } = render(<RightPanel />);
-    
-    // PDFViewer should render with initial key
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
-    
-    // Change statement data - this changes the key
+
     act(() => {
-      useAppStore.getState().setStatementData({
-        statement_month: '12',
-        statement_year: '2025'
-      });
+      useAppStore.getState().setStatementData({ statement_month: '12', statement_year: '2025' });
     });
-    
-    // Re-render component with new key
+
     act(() => {
       rerender(<RightPanel />);
     });
-    
-    // New PDFViewer should be rendered with new key
-    // The key prop ensures clean unmount and new instance
+
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
   });
 });

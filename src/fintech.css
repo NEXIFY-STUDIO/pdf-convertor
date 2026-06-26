@@ -820,4 +820,313 @@ body {
   background-color: rgba(59, 130, 246, 0.06) !important;
 }
 
+/* ─── Inspector Panel (PDF-first editor) ───────────────────── */
+
+.ft-preview-split {
+  display: flex;
+  flex-direction: row;
+}
+
+.ft-preview-split .ft-pdf-viewer {
+  flex: 1;
+  min-width: 0;
+}
+
+.ft-inspector-panel {
+  width: 340px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ft-inspector {
+  overflow-y: auto;
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.ft-inspector-summary {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ft-inspector-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.ft-inspector-summary-editable {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: var(--t-fast);
+}
+
+.ft-inspector-summary-editable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ft-inspector-summary-row strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.ft-inspector-summary-final {
+  border-top: 1px solid var(--border);
+  padding-top: 0.35rem;
+  margin-top: 0.15rem;
+  font-weight: 600;
+}
+
+.ft-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ft-inspector-heading {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0;
+}
+
+.ft-inspector-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ft-inspector-field-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--t-fast);
+}
+
+.ft-inspector-field-btn:hover,
+.ft-inspector-field-btn.active {
+  background: var(--surface-3);
+  border-color: var(--border-mid);
+}
+
+.ft-inspector-field-label {
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+
+.ft-inspector-field-value {
+  font-size: 0.75rem;
+  color: var(--text);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.ft-inspector-logo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.ft-inspector-logo img {
+  max-height: 32px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.ft-inspector-upload {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--r-sm);
+  font-size: 0.6875rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+}
+
+.ft-inspector-upload input {
+  display: none;
+}
+
+.ft-inspector-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ft-inspector-tx-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: var(--t-fast);
+}
+
+.ft-inspector-tx-row:hover,
+.ft-inspector-tx-row.active {
+  background: var(--surface-3);
+  border-color: var(--border-mid);
+}
+
+.ft-inspector-tx-date {
+  font-size: 0.625rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.ft-inspector-tx-desc {
+  font-size: 0.6875rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ft-inspector-tx-amount {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.ft-inspector-tx-amount.credit { color: #4ade80; }
+.ft-inspector-tx-amount.debit  { color: #f87171; }
+
+.ft-inspector-editor {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ft-inspector-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.ft-inspector-tx-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ft-inspector-tx-dates,
+.ft-inspector-tx-symbols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.ft-inspector-tx-amount-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.ft-inspector-tx-amount-row > div { flex: 1; }
+
+.ft-inspector-fee-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding-bottom: 0.5rem;
+  white-space: nowrap;
+}
+
+.ft-batch-bar {
+  padding: 0.75rem 1.125rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ft-batch-bar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ft-batch-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ft-batch-progress {
+  color: var(--color-primary);
+  margin-left: 10px;
+  font-size: 0.7rem;
+  text-transform: none;
+  font-weight: normal;
+}
+
+.ft-batch-timeline {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.ft-batch-chip {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: fit-content;
+}
+
+.ft-batch-balance {
+  font-size: 0.65rem;
+  opacity: 0.7;
+  font-family: var(--font-mono);
+}
+
 

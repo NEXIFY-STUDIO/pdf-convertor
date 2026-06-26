@@ -67,6 +67,24 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/production/**/*.test.ts',
+    ],
+    coverage: {
+      provider: 'v8',
+      include: [
+        'src/shared/**',
+        'src/export/**',
+        'src/editor/**',
+        'src/components/RightPanel.tsx',
+      ],
+      thresholds: {
+        lines: 100,
+        statements: 100,
+        branches: 94,
+        functions: 80,
+      },
+    },
   },
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
-import { StatementDocument } from '../components/RightPanel';
+import { StatementDocument } from '../pdf/StatementDocument';
 import { SourceOfTruthType } from '../schema/sourceOfTruth';
 
 // Mock data for testing
