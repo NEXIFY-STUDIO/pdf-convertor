@@ -1,21 +1,27 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
+const base = '/vub/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg', 'pwa-512x512-maskable.svg'],
       manifest: {
-        name: 'PDF HTML Forge',
-        short_name: 'PDF Forge',
-        description: 'Convert PDF files into visually accurate offline HTML exports',
+        name: 'Blueprint Flow Editor',
+        short_name: 'Blueprint PDF',
+        description: 'Offline-first PDF financial statement editor',
         theme_color: '#1a1a2e',
         background_color: '#16213e',
         display: 'standalone',
+        start_url: base,
+        scope: base,
         icons: [
           {
             src: 'pwa-192x192.svg',
@@ -36,23 +42,13 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cdnjs\.delivr\.net\/npm\/pdfjs-dist@.*/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'pdfjs-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-            },
-          },
-        ],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,ttf}'],
       },
     }),
   ],
+  optimizeDeps: {
+    exclude: ['@react-pdf/renderer'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -61,11 +57,39 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/production/**/*.test.ts',
+    ],
+    coverage: {
+      provider: 'v8',
+      include: [
+        'src/shared/**',
+        'src/export/**',
+        'src/editor/**',
+        'src/components/RightPanel.tsx',
+      ],
+      thresholds: {
+        lines: 100,
+        statements: 100,
+        branches: 94,
+        functions: 80,
+      },
+    },
   },
 });

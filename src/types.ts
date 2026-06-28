@@ -39,6 +39,7 @@ export interface PageAsset {
   imageBlob: Blob;
   imageUrl: string;
   textContent?: string;
+  textLayerHtml?: string;
   width: number;
   height: number;
 }
