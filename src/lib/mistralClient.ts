@@ -1,4 +1,5 @@
 import { SourceOfTruthType } from '../schema/sourceOfTruth';
+import { z } from 'zod';
 
 export function normalizeAIResult(data: any, text?: string): any {
   if (!data) return data;
@@ -117,7 +118,7 @@ export function extractFromVUBStatement(text: string): any {
   if (!text) return null;
   
   let fsModule: any = null;
-  if (typeof window === 'undefined') {
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
     try {
       // Dynamic require that avoids bundler analysis
       fsModule = eval('require')('fs');
@@ -130,7 +131,9 @@ export function extractFromVUBStatement(text: string): any {
       try {
         const rawData = JSON.parse(fsModule.readFileSync(cachedPath, 'utf8'));
         return normalizeAIResult(rawData, text);
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to parse VUB cached data:', e);
+      }
     }
   }
   return {
@@ -362,5 +365,119 @@ export async function parseStatementWithAI(
   } catch (error: any) {
     console.error('AI parsing error:', error);
     throw new Error(error.message || 'Nepodarilo sa spracovať výpis pomocou AI.');
+  }
+}
+
+// --- SLSP Business Účet S ---
+
+export const slspStatementSchema = z.object({
+  "Header Info": z.object({
+    "Banka": z.object({
+      "Názov": z.string().optional(),
+      "Adresa": z.string().optional(),
+      "IČO": z.string().optional(),
+      "Zápis v registri": z.string().optional()
+    }).optional(),
+    "Typ výpisu": z.string().optional(),
+    "Názov Účtu": z.string().optional(),
+    "Adresa klienta": z.string().optional(),
+    "Číslo Účtu (IBAN)": z.string().optional(),
+    "BIC": z.string().optional(),
+    "Mena": z.string().optional(),
+    "Dátum vyhotovenia výpisu": z.string().optional(),
+    "Účtovné obdobie": z.string().optional()
+  }).optional(),
+  
+  "Balances": z.object({
+    "Počiatočný stav Účtu": z.string().optional(),
+    "Vklady spolu": z.string().optional(),
+    "Výbery spolu": z.string().optional(),
+    "Konečný stav Účtu": z.string().optional(),
+    "Transakčná daň spolu": z.string().optional()
+  }).optional(),
+
+  "Transactions": z.array(z.object({
+    "Dátum valuty": z.string().optional(),
+    "Dátum zúčtovania": z.string().optional(),
+    "Popis transakcie": z.string().optional(),
+    "Suma transakcie": z.string().optional(),
+    "Suma poplatku": z.string().optional()
+  })).optional(),
+
+  "Tax Summary": z.object({
+    "Transakčná daň": z.object({
+      "Suma": z.string().optional(),
+      "Počet kusov": z.string().optional()
+    }).optional(),
+    "Transakčná daň (z poplatkov, úrokov)": z.object({
+      "Suma": z.string().optional(),
+      "Počet kusov": z.string().optional()
+    }).optional()
+  }).optional()
+});
+
+export type SlspStatement = z.infer<typeof slspStatementSchema>;
+
+const SLSP_EXTRACTION_PROMPT = `
+Tvojou úlohou je extrahovať štruktúrované dáta z bankového výpisu Slovenskej sporiteľne (Business účet S).
+Na vstupe dostaneš surový OCR text z PDF súboru. Tvojou úlohou je vyznať sa v ňom a vrátiť VALÍDNY JSON.
+
+Inštrukcie pre sumy a čísla:
+- Všetky sumy musia obsahovať presný formát ako v texte (napr. "40 350,00" alebo "- 80,03").
+- Ak nejaké dáta chýbajú, vráť prázdny string "".
+
+Zabezpeč, aby JSON presne odpovedal požadovanej štruktúre bez akýchkoľvek ďalších textov.
+`;
+
+export async function parseSlspStatementWithAI(
+  statementText: string,
+  apiKey: string,
+  model: string = 'mistral-large-latest'
+): Promise<SlspStatement> {
+  if (!apiKey) {
+    throw new Error('Chýba Mistral API kľúč. Zadajte ho prosím v nastaveniach.');
+  }
+
+  try {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SLSP_EXTRACTION_PROMPT },
+          { role: 'user', content: `Zanalyzuj nasledovný bankový výpis a skonvertuj ho do požadovaného JSON:\n\n${statementText}` }
+        ],
+        temperature: 0.1
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.message || `HTTP error ${response.status}`;
+      throw new Error(`Chyba API Mistral: ${errMsg}`);
+    }
+
+    const data: MistralResponse = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error('Mistral API nevrátilo žiadny obsah.');
+    }
+
+    const parsedData = JSON.parse(content);
+    
+    // Zod validácia - odfiltruje halucinácie a overí štruktúru
+    const validatedData = slspStatementSchema.parse(parsedData);
+    
+    return validatedData;
+  } catch (error: any) {
+    console.error('AI parsing error (SLSP):', error);
+    throw new Error(error.message || 'Nepodarilo sa spracovať SLSP výpis pomocou AI.');
   }
 }

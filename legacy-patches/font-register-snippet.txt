@@ -1,0 +1,16 @@
+// Aliasy používané v štýloch — mapované na DejaVu (Cousine/Inter nie sú v bundle)
+Font.register({
+  family: 'Cousine',
+  fonts: [
+    { src: '/fonts/DejaVuSansMono.ttf', fontWeight: 400 },
+    { src: '/fonts/DejaVuSansMono-Bold.ttf', fontWeight: 700 },
+  ],
+});
+
+Font.register({
+  family: 'Inter',
+  fonts: [
+    { src: '/fonts/DejaVuSans.ttf', fontWeight: 400 },
+    { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 700 },
+  ],
+});

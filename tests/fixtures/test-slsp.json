@@ -1,0 +1,58 @@
+{
+  "Header Info": {
+    "Banka": {
+      "Názov": "Slovenská sporiteľňa, a.s.",
+      "Adresa": "Tomášikova 48, 832 37 Bratislava",
+      "IČO": "00 151 653",
+      "Zápis v registri": "Obchodnom registri Mestského súdu Bratislava III., oddiel Sa, vložka č. 601/B"
+    },
+    "Typ výpisu": "Výpis z Účtu: Business účet S",
+    "Názov Účtu": "DALMAN group s. r. o.",
+    "Adresa klienta": "Hodvábna 4269/13, 071 01 Michalovce 1",
+    "Číslo Účtu (IBAN)": "SK04 0900 0000 0052 0896 0265",
+    "BIC": "GIBASKBX",
+    "Mena": "EUR",
+    "Dátum vyhotovenia výpisu": "31. 03. 2026",
+    "Účtovné obdobie": "01. 03. 2026 - 31. 03. 2026"
+  },
+  "Balances": {
+    "Počiatočný stav Účtu": "40 350,00",
+    "Vklady spolu": "40 350,00",
+    "Výbery spolu": "40 350,00",
+    "Konečný stav Účtu": "40 350,00",
+    "Transakčná daň spolu": "- 80,09"
+  },
+  "Transactions": [
+    {
+      "Dátum valuty": "02. 03. 2026",
+      "Dátum zúčtovania": "02. 03. 2026",
+      "Popis transakcie": "Príjem platby od klienta ABC s.r.o., VS: 202603001, KS: 0308",
+      "Suma transakcie": "15 000,00",
+      "Suma poplatku": "0,00"
+    },
+    {
+      "Dátum valuty": "12. 03. 2026",
+      "Dátum zúčtovania": "12. 03. 2026",
+      "Popis transakcie": "Platba dodávateľovi XYZ s.r.o., faktúra č. XYZ-2026-015, IBAN: SK12 0900 0000 0000 1234 5678",
+      "Suma transakcie": "-20 000,00",
+      "Suma poplatku": "0,00"
+    },
+    {
+      "Dátum valuty": "28. 03. 2026",
+      "Dátum zúčtovania": "28. 03. 2026",
+      "Popis transakcie": "Poplatok za vedenie účtu Business účet S a transakčná daň",
+      "Suma transakcie": "-5 350,00",
+      "Suma poplatku": "0,00"
+    }
+  ],
+  "Tax Summary": {
+    "Transakčná daň": {
+      "Suma": "- 80,03",
+      "Počet kusov": "2 ks"
+    },
+    "Transakčná daň (z poplatkov, úrokov)": {
+      "Suma": "- 0,06",
+      "Počet kusov": "1 ks"
+    }
+  }
+}

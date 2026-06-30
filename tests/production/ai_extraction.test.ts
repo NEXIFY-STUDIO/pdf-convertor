@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 describe('AI Extraction - Production Tests', () => {
-  const testFilePath = path.join(__dirname, '../../../tests/fixtures/589815263-inbound2080046449.txt');
+  const testFilePath = path.join(__dirname, '../../tests/fixtures/589815263-inbound2080046449.txt');
   const testData = fs.readFileSync(testFilePath, 'utf8');
 
   it('should extract exactly 19 transactions', () => {
@@ -40,12 +40,13 @@ describe('AI Extraction - Production Tests', () => {
 
   it('should handle diacritics correctly', () => {
     const result = extractFromVUBStatement(testData);
-    const hasDiacritics = result.transactions.some((tx: any) =>
-      tx.description?.includes('Č') ||
-      tx.description?.includes('ľ') ||
-      tx.description?.includes('ň') ||
-      tx.client?.name?.includes('Č')
-    );
+    const hasDiacritics =
+      result.client?.name?.includes('Č') ||
+      result.transactions.some((tx: any) =>
+        tx.description?.includes('Č') ||
+        tx.description?.includes('ľ') ||
+        tx.description?.includes('ň')
+      );
     expect(hasDiacritics).toBe(true);
   });
 });

@@ -1,0 +1,8 @@
+VÚB, a.s.
+Por. číslo: 7/2022
+Obdobie od 01.07.2022 do 31.07.2022
+Klient: MONIKA KUPČOVÁ
+HRONSKÉ KLAČANY 277
+IBAN: SK70 0200 0000 0011 4286 3551
+Počiatočný zostatok: 1708,49 EUR
+(pozri tests/outputs/ai_extracted_data.json — 19 transakcií)

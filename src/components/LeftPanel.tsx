@@ -39,7 +39,8 @@ export default function LeftPanel() {
     batchSettings,
     setBatchMode,
     setBatchSettings,
-    generateBatch
+    generateBatch,
+    applyMagicWandPreset,
   } = useAppStore();
 
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
@@ -53,6 +54,15 @@ export default function LeftPanel() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiSuccess, setAiSuccess] = useState(false);
+  const [wandSuccess, setWandSuccess] = useState(false);
+
+  const handleMagicWand = () => {
+    const { aiPrompt } = applyMagicWandPreset();
+    setRawText(aiPrompt);
+    setWandSuccess(true);
+    setAiError(null);
+    setTimeout(() => setWandSuccess(false), 4000);
+  };
 
   const handleAiParse = async () => {
     if (!rawText.trim()) return;
@@ -161,7 +171,31 @@ export default function LeftPanel() {
 
   return (
     <aside className="ft-left">
-      
+
+      {/* Magic Wand — Kolomanov Mlyn SLSP preset */}
+      <button
+        type="button"
+        className="ft-btn ft-btn-primary"
+        style={{
+          width: '100%',
+          justifyContent: 'center',
+          marginBottom: '1rem',
+          background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+          border: 'none',
+          gap: '6px',
+        }}
+        onClick={handleMagicWand}
+        title="Kolomanov Mlyn IČO 57194050 — 3× výpis (max 10 platieb, 2 strany PDF, obrat 50–54 tis. €)"
+      >
+        <span aria-hidden="true">🪄</span>
+        Magická palička — Kolomanov Mlyn
+      </button>
+      {wandSuccess && (
+        <div style={{ margin: '-0.75rem 0 1rem', color: 'var(--color-success)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+          ✓ 04–06/2026 · 10 platieb/2 strany · obrat 51–54 tis. € · zostatky 6 545 / 4 444 / 5 909 €
+        </div>
+      )}
+
       {/* Mode Toggle Selector */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem' }}>
         <button 

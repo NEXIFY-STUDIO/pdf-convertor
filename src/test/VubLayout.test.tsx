@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/react';
 import RightPanel from '../components/RightPanel';
+import { useAppStore } from '../store/useAppStore';
 
 vi.mock('@react-pdf/renderer', () => {
   return {
@@ -16,6 +17,22 @@ vi.mock('@react-pdf/renderer', () => {
 });
 
 describe('VÚB Statement layout requirements & correctness', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      batchMode: false,
+      sourceOfTruth: {
+        ...useAppStore.getState().sourceOfTruth,
+        bank: {
+          bank_logo_id: 'VÚB BANKA Intesa Sanpaolo Group',
+          bank_logo_image: '/vub/vuub.png',
+          bank_register_info: 'VÚB, a.s., Mlynské nivy 1...',
+          bank_outlet_id: '30017',
+          bank_outlet_address: 'KOMÁRNICKÁ 11, BRATISLAVA',
+        }
+      }
+    });
+  });
+
   it('should render VÚB specific bank logo / name in PDF by default', () => {
     render(<RightPanel />);
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();

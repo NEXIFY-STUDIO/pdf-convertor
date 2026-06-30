@@ -1,0 +1,267 @@
+{
+  "bank": {
+    "bank_logo_id": "VÚB, a.s.",
+    "bank_register_info": "VÚB, a.s., Mlynské nivy 1, 829 90 Bratislava, Obch. reg.: Okresný súd Bratislava 1, Oddiel: Sa, Vložka č. 341/B, IČO: 31320155",
+    "bank_outlet_id": "30017",
+    "bank_outlet_address": "Svätotrojičné nám. 8, Krupina"
+  },
+  "client": {
+    "client_title": "MONIKA KUPČOVÁ",
+    "client_street": "HRONSKÉ KLAČANY 277",
+    "client_zip": "935 29",
+    "client_city": "HRONSKÉ KLAČANY",
+    "client_iban": "SK70 0200 0000 0011 4286 3551",
+    "client_swift": "SUBASKBX",
+    "client_account": "Bežný účet",
+    "client_id": "12345678",
+    "client_limit": "0,00"
+  },
+  "statement": {
+    "period_start": "01.07.2022",
+    "period_end": "31.07.2022",
+    "statement_number": "7/2022",
+    "statement_frequency": "mesačne",
+    "statement_title": "VÝPIS Z ÚČTU",
+    "statement_date": "31.07.2022",
+    "statement_currency": "EUR",
+    "statement_month": "07",
+    "statement_year": "2022"
+  },
+  "balances": {
+    "opening_balance": 1708.49,
+    "closing_balance": 1837.22,
+    "total_credit": 716.22,
+    "total_debit": 580.61,
+    "total_fees": 6.88
+  },
+  "transactions": [
+    {
+      "date_realiz": "01.07.2022",
+      "date_booking": "01.07.2022",
+      "date_valuta": "01.07.2022",
+      "amount": -45.5,
+      "description": "Platba protistrana 1",
+      "popis": "Platba protistrana 1",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000000",
+      "ks": "0308",
+      "type": "outgoing",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "02.07.2022",
+      "date_booking": "02.07.2022",
+      "date_valuta": "02.07.2022",
+      "amount": 83.7,
+      "description": "Platba protistrana 2",
+      "popis": "Platba protistrana 2",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "03.07.2022",
+      "date_booking": "03.07.2022",
+      "date_valuta": "03.07.2022",
+      "amount": 87.4,
+      "description": "Platba protistrana 3",
+      "popis": "Platba protistrana 3",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000002",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "04.07.2022",
+      "date_booking": "04.07.2022",
+      "date_valuta": "04.07.2022",
+      "amount": -51.8,
+      "description": "Platba protistrana 4",
+      "popis": "Platba protistrana 4",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "outgoing",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "05.07.2022",
+      "date_booking": "05.07.2022",
+      "date_valuta": "05.07.2022",
+      "amount": 94.8,
+      "description": "ZSE ENERGIA, A.S. — elektrina za júl",
+      "popis": "ZSE ENERGIA, A.S. — elektrina za júl",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000004",
+      "ks": "0308",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "06.07.2022",
+      "date_booking": "06.07.2022",
+      "date_valuta": "06.07.2022",
+      "amount": 98.5,
+      "description": "Platba protistrana 6",
+      "popis": "Platba protistrana 6",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "07.07.2022",
+      "date_booking": "07.07.2022",
+      "date_valuta": "07.07.2022",
+      "amount": -58.1,
+      "description": "Platba protistrana 7",
+      "popis": "Platba protistrana 7",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000006",
+      "type": "outgoing",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "08.07.2022",
+      "date_booking": "08.07.2022",
+      "date_valuta": "08.07.2022",
+      "amount": 105.9,
+      "description": "Železničná stanica — lístok",
+      "popis": "Železničná stanica — lístok",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "09.07.2022",
+      "date_booking": "09.07.2022",
+      "date_valuta": "09.07.2022",
+      "amount": 109.6,
+      "description": "Platba protistrana 9",
+      "popis": "Platba protistrana 9",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000008",
+      "ks": "0308",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "10.07.2022",
+      "date_booking": "10.07.2022",
+      "date_valuta": "10.07.2022",
+      "amount": -64.4,
+      "description": "Platba protistrana 10",
+      "popis": "Platba protistrana 10",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "outgoing",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "11.07.2022",
+      "date_booking": "11.07.2022",
+      "date_valuta": "11.07.2022",
+      "amount": 117,
+      "description": "Platba protistrana 11",
+      "popis": "Platba protistrana 11",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000010",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "12.07.2022",
+      "date_booking": "12.07.2022",
+      "date_valuta": "12.07.2022",
+      "amount": 120.7,
+      "description": "Platba protistrana 12",
+      "popis": "Platba protistrana 12",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "13.07.2022",
+      "date_booking": "13.07.2022",
+      "date_valuta": "13.07.2022",
+      "amount": -70.7,
+      "description": "Slovenský telekom — služby",
+      "popis": "Slovenský telekom — služby",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000012",
+      "ks": "0308",
+      "type": "outgoing",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "14.07.2022",
+      "date_booking": "14.07.2022",
+      "date_valuta": "14.07.2022",
+      "amount": 128.1,
+      "description": "Platba protistrana 14",
+      "popis": "Platba protistrana 14",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "15.07.2022",
+      "date_booking": "15.07.2022",
+      "date_valuta": "15.07.2022",
+      "amount": 131.8,
+      "description": "Platba protistrana 15",
+      "popis": "Platba protistrana 15",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000014",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "16.07.2022",
+      "date_booking": "16.07.2022",
+      "date_valuta": "16.07.2022",
+      "amount": -77,
+      "description": "Platba protistrana 16",
+      "popis": "Platba protistrana 16",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "outgoing",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "17.07.2022",
+      "date_booking": "17.07.2022",
+      "date_valuta": "17.07.2022",
+      "amount": 139.2,
+      "description": "Platba protistrana 17",
+      "popis": "Platba protistrana 17",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000016",
+      "ks": "0308",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "18.07.2022",
+      "date_booking": "18.07.2022",
+      "date_valuta": "18.07.2022",
+      "amount": 142.9,
+      "description": "Platba protistrana 18",
+      "popis": "Platba protistrana 18",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "type": "incoming",
+      "is_fee": false
+    },
+    {
+      "date_realiz": "19.07.2022",
+      "date_booking": "19.07.2022",
+      "date_valuta": "19.07.2022",
+      "amount": -83.3,
+      "description": "Platba protistrana 19",
+      "popis": "Platba protistrana 19",
+      "account": "SK11 0200 0000 2700 0210 7012",
+      "vs": "1000018",
+      "type": "outgoing",
+      "is_fee": false
+    }
+  ],
+  "exportSettings": {
+    "show_logo": true,
+    "language": "sk"
+  }
+}

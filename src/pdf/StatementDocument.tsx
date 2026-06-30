@@ -9,7 +9,8 @@ import {
 // ============================================
 // 1. FONT REGISTRATION (DejaVu Sans for Slovak diacritics)
 // ============================================
-const assetBase = import.meta.env.BASE_URL;
+const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+const assetBase = isNode ? 'public/' : import.meta.env.BASE_URL;
 
 Font.register({
   family: 'DejaVu Sans',
@@ -24,6 +25,23 @@ Font.register({
   fonts: [
     { src: `${assetBase}fonts/DejaVuSansMono.ttf`, fontWeight: 400 },
     { src: `${assetBase}fonts/DejaVuSansMono-Bold.ttf`, fontWeight: 700 },
+  ],
+});
+
+// Map Cousine and Inter to DejaVu fonts to avoid bundle size increases
+Font.register({
+  family: 'Cousine',
+  fonts: [
+    { src: `${assetBase}fonts/DejaVuSansMono.ttf`, fontWeight: 400 },
+    { src: `${assetBase}fonts/DejaVuSansMono-Bold.ttf`, fontWeight: 700 },
+  ],
+});
+
+Font.register({
+  family: 'Inter',
+  fonts: [
+    { src: `${assetBase}fonts/DejaVuSans.ttf`, fontWeight: 400 },
+    { src: `${assetBase}fonts/DejaVuSans-Bold.ttf`, fontWeight: 700 },
   ],
 });
 
@@ -755,8 +773,14 @@ const LegalSection = () => {
   );
 };
 
+/** Max riadkov pre 2-stranový kompaktný layout (5 + 5 na stranu) */
+export const COMPACT_STATEMENT_MAX_TX = 10;
+export const COMPACT_FIRST_PAGE_TX = 5;
+
 export const StatementDocument = memo(({ sourceOfTruth }: { sourceOfTruth: any }) => {
   const { bank, client, statement, balances, transactions } = sourceOfTruth;
+  const compactLayout = transactions.length <= COMPACT_STATEMENT_MAX_TX;
+  const firstPageTxCount = compactLayout ? COMPACT_FIRST_PAGE_TX : 9;
 
   // Render transactions rows helper for a slice
   const renderTransactionsTableRows = (txSlice: any[], startIndex: number) => {
@@ -916,7 +940,7 @@ export const StatementDocument = memo(({ sourceOfTruth }: { sourceOfTruth: any }
         {/* Transactions Table */}
         <View style={styles.table}>
           <TransactionsTableHeader />
-          {renderTransactionsTableRows(transactions.slice(0, 9), 0)}
+          {renderTransactionsTableRows(transactions.slice(0, firstPageTxCount), 0)}
         </View>
 
         {/* Side ID text */}
@@ -925,58 +949,81 @@ export const StatementDocument = memo(({ sourceOfTruth }: { sourceOfTruth: any }
         </Text>
       </Page>
 
-      {/* Page 2: Header, Subheader, Next 9 Transactions (indices 9 to 17) */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader bank={bank} statement={statement} />
-        <PageSubHeader bank={bank} client={client} statement={statement} />
-        
-        <View style={styles.table}>
-          <TransactionsTableHeader />
-          {renderTransactionsTableRows(transactions.slice(9, 18), 9)}
-        </View>
+      {compactLayout ? (
+        /* Kompaktný 2-stranový výpis (≤10 platieb) */
+        <Page size="A4" style={styles.page}>
+          <PageHeader bank={bank} statement={statement} />
+          <PageSubHeader bank={bank} client={client} statement={statement} />
 
-        {/* Side ID text */}
-        <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
-          VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
-        </Text>
-      </Page>
+          <View style={styles.table}>
+            <TransactionsTableHeader />
+            {renderTransactionsTableRows(transactions.slice(firstPageTxCount), firstPageTxCount)}
+          </View>
 
-      {/* Page 3: Header, Subheader, Transaction index 18, and details sections */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader bank={bank} statement={statement} />
-        <PageSubHeader bank={bank} client={client} statement={statement} />
-        
-        <View style={styles.table}>
-          <TransactionsTableHeader />
-          {renderTransactionsTableRows(transactions.slice(18, 19), 18)}
-        </View>
+          <View style={{ marginBottom: 10 }} />
 
-        {/* Extra spacing after the single transaction row */}
-        <View style={{ marginBottom: 15 }} />
+          <BalancesDetail balances={balances} statement={statement} />
+          <LoyaltySection />
+          <SavingsSection />
+          <OfferSection />
+          <LegalSection />
 
-        <BalancesDetail balances={balances} statement={statement} />
-        <LoyaltySection />
-        <SavingsSection />
-        <OfferSection />
+          <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
+            VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
+          </Text>
+        </Page>
+      ) : (
+        <>
+          {/* Page 2: Header, Subheader, Next 9 Transactions (indices 9 to 17) */}
+          <Page size="A4" style={styles.page}>
+            <PageHeader bank={bank} statement={statement} />
+            <PageSubHeader bank={bank} client={client} statement={statement} />
 
-        {/* Side ID text */}
-        <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
-          VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
-        </Text>
-      </Page>
+            <View style={styles.table}>
+              <TransactionsTableHeader />
+              {renderTransactionsTableRows(transactions.slice(9, 18), 9)}
+            </View>
 
-      {/* Page 4: Header, Subheader, Legal Protection Info */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader bank={bank} statement={statement} />
-        <PageSubHeader bank={bank} client={client} statement={statement} />
-        
-        <LegalSection />
+            <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
+              VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
+            </Text>
+          </Page>
 
-        {/* Side ID text */}
-        <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
-          VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
-        </Text>
-      </Page>
+          {/* Page 3: Header, Subheader, Transaction index 18, and details sections */}
+          <Page size="A4" style={styles.page}>
+            <PageHeader bank={bank} statement={statement} />
+            <PageSubHeader bank={bank} client={client} statement={statement} />
+
+            <View style={styles.table}>
+              <TransactionsTableHeader />
+              {renderTransactionsTableRows(transactions.slice(18, 19), 18)}
+            </View>
+
+            <View style={{ marginBottom: 15 }} />
+
+            <BalancesDetail balances={balances} statement={statement} />
+            <LoyaltySection />
+            <SavingsSection />
+            <OfferSection />
+
+            <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
+              VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
+            </Text>
+          </Page>
+
+          {/* Page 4: Header, Subheader, Legal Protection Info */}
+          <Page size="A4" style={styles.page}>
+            <PageHeader bank={bank} statement={statement} />
+            <PageSubHeader bank={bank} client={client} statement={statement} />
+
+            <LegalSection />
+
+            <Text style={{ position: 'absolute', bottom: 30, left: 15, transformOrigin: 'left bottom', transform: 'rotate(-90deg)', fontSize: 5, letterSpacing: 0.5 }} fixed>
+              VUB_AFP_RETAELE_XDA_20220729111224_120XP.DAT.xml 3763129 PIDS253D
+            </Text>
+          </Page>
+        </>
+      )}
     </Document>
   );
 });

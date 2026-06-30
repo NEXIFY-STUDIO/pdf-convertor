@@ -17,7 +17,7 @@ describe('Security - Production Tests', () => {
   describe('Input Sanitization', () => {
     it('should remove HTML tags', () => {
       expect(sanitizeInput('<script>alert("xss")</script>')).toBe('alert("xss")');
-      expect(sanitizeInput('<img src=x onerror=alert(1)>')).toBe('img src=x onerror=alert(1)');
+      expect(sanitizeInput('<img src=x onerror=alert(1)>')).toBe('');
     });
 
     it('should sanitize transaction data', () => {

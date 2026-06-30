@@ -11,7 +11,7 @@ import React from 'react';
 describe('Performance - Production Tests', () => {
   it('should extract 19 transactions in under 1 second', () => {
     const testData = fs.readFileSync(
-      path.join(__dirname, '../../../tests/fixtures/589815263-inbound2080046449.txt'),
+      path.join(__dirname, '../../tests/fixtures/589815263-inbound2080046449.txt'),
       'utf8'
     );
 
@@ -25,7 +25,7 @@ describe('Performance - Production Tests', () => {
   it('should generate PDF in under 2 seconds', async () => {
     const store = useAppStore.getState();
     const testData = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '../../../tests/outputs/ai_extracted_data.json'),
+      path.join(__dirname, '../../tests/outputs/ai_extracted_data.json'),
       'utf8'
     ));
     store.setSourceOfTruth(testData);
@@ -40,7 +40,7 @@ describe('Performance - Production Tests', () => {
   it('should handle 100 transactions without memory issues', async () => {
     const store = useAppStore.getState();
     const testData = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '../../../tests/outputs/ai_extracted_data.json'),
+      path.join(__dirname, '../../tests/outputs/ai_extracted_data.json'),
       'utf8'
     ));
 

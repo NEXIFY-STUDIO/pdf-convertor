@@ -1,5 +1,10 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { SourceOfTruthType, TransactionType, ClientDataType, StatementDataType, BankDataType, ExportSettingsType } from '../schema/sourceOfTruth';
+import {
+  buildKolomanovMlynBatch,
+  MAGIC_WAND_BATCH_SETTINGS,
+  MAGIC_WAND_AI_PROMPT,
+} from '../presets/kolomanovMlynSlspPreset';
 
 interface AppState {
   sourceOfTruth: SourceOfTruthType;
@@ -35,7 +40,7 @@ interface AppState {
   setBatchSettings: (settings: Partial<AppState['batchSettings']>) => void;
   generateBatch: () => void;
   cascadeBalances: () => void;
-  
+  applyMagicWandPreset: () => { aiPrompt: string };
 
 }
 
@@ -83,30 +88,20 @@ const initialSourceOfTruth: SourceOfTruthType = {
   }
 };
 
-const initialBatchSettings = {
-  startMonth: '11',
-  startYear: '2025',
-  numberOfMonths: 3,
-  initialOpeningBalance: 1000,
-  recurringTransactions: [
-    { description: 'Mzda / Výplata', amount: 2500, day: 15 },
-    { description: 'Nájomné a poplatky', amount: -650, day: 2 },
-    { description: 'Nákup potravín LIDL', amount: -75, day: 10 },
-    { description: 'Mobilné služby', amount: -32.50, day: 20 }
-  ]
-};
+const _defaultBatchStatements = buildKolomanovMlynBatch();
+const _defaultSourceOfTruth = _defaultBatchStatements[0] ?? initialSourceOfTruth;
 
 export const useAppStore = createWithEqualityFn<AppState>((set, get) => ({
-  sourceOfTruth: initialSourceOfTruth,
+  sourceOfTruth: _defaultSourceOfTruth,
   mistralApiKey: typeof window !== 'undefined' 
     ? window.localStorage?.getItem('mistral_api_key') || (import.meta.env.VITE_MISTRAL_API_KEY as string) || '' 
     : '',
   
-  // Batch initial state
-  batchMode: false,
+  // Batch initial state — Kolomanov Mlyn preset prednastavený
+  batchMode: true,
   selectedBatchIndex: 0,
-  batchStatements: [],
-  batchSettings: initialBatchSettings,
+  batchStatements: _defaultBatchStatements,
+  batchSettings: { ...MAGIC_WAND_BATCH_SETTINGS },
 
   setSourceOfTruth: (data) => set({ sourceOfTruth: data }),
 
@@ -382,6 +377,19 @@ export const useAppStore = createWithEqualityFn<AppState>((set, get) => ({
         sourceOfTruth: initialTruth
       };
     });
+  },
+
+  applyMagicWandPreset: () => {
+    const batchStatements = buildKolomanovMlynBatch();
+    const first = batchStatements[0];
+    set({
+      batchMode: true,
+      batchSettings: { ...MAGIC_WAND_BATCH_SETTINGS },
+      batchStatements,
+      selectedBatchIndex: 0,
+      sourceOfTruth: first,
+    });
+    return { aiPrompt: MAGIC_WAND_AI_PROMPT };
   },
 
   cascadeBalances: () => {
